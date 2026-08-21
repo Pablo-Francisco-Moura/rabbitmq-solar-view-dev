@@ -175,11 +175,33 @@ body {
 
 .message-list__meta {
   display: flex;
+  align-items: center;
   gap: 12px;
   color: var(--muted);
   font-size: 0.75rem;
   margin-bottom: 4px;
   margin-left: 18px;
+}
+
+.message-list__delete {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.message-list__delete:hover {
+  background: rgba(229, 83, 75, 0.15);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.message-list__delete:disabled {
+  opacity: 0.5;
 }
 
 .message-list__summary {

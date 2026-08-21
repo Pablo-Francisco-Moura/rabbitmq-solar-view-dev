@@ -18,3 +18,9 @@ export const publishMessage = (queue, payload, priority) =>
     method: "POST",
     body: JSON.stringify({ queue, payload, priority }),
   });
+
+export const deleteMessage = (queue, index, payload) =>
+  request(`/queues/${encodeURIComponent(queue)}/messages/${index}`, {
+    method: "DELETE",
+    body: JSON.stringify({ payload }),
+  });

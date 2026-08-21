@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import QueueCard from "./components/QueueCard.jsx";
 import MessageList from "./components/MessageList.jsx";
 import PublishForm from "./components/PublishForm.jsx";
-import { getQueues, getMessages, publishMessage } from "./api.js";
+import { getQueues, getMessages, publishMessage, deleteMessage } from "./api.js";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -55,6 +55,18 @@ export default function App() {
     if (queue === selectedQueue) await refreshMessages(queue);
   }
 
+  async function handleDelete(index, payload) {
+    let deleteError = null;
+    try {
+      await deleteMessage(selectedQueue, index, payload);
+    } catch (error) {
+      deleteError = error.message;
+    }
+    await refreshQueues();
+    await refreshMessages(selectedQueue);
+    if (deleteError) setMessagesError(deleteError);
+  }
+
   return (
     <div className="app">
       <header className="app__header">
@@ -87,6 +99,7 @@ export default function App() {
           loading={messagesLoading}
           error={messagesError}
           onRefresh={() => refreshMessages(selectedQueue)}
+          onDelete={handleDelete}
         />
         <PublishForm queues={queues} onPublish={handlePublish} />
       </div>

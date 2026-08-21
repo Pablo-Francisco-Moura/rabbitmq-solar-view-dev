@@ -117,6 +117,61 @@ app.get("/api/queues/:queue/messages", async (request, response) => {
   }
 });
 
+async function drainQueue(activeChannel, queue, maxMessages = 5000) {
+  const drained = [];
+  while (drained.length < maxMessages) {
+    const message = await activeChannel.get(queue, { noAck: false });
+    if (!message) break;
+    activeChannel.ack(message);
+    drained.push({ content: message.content, properties: message.properties });
+  }
+  return drained;
+}
+
+async function refillQueue(activeChannel, queue, entries) {
+  for (const entry of entries) {
+    activeChannel.sendToQueue(queue, entry.content, {
+      persistent: entry.properties.deliveryMode === 2,
+      priority: entry.properties.priority,
+      contentType: entry.properties.contentType,
+      headers: entry.properties.headers,
+    });
+  }
+  await activeChannel.waitForConfirms();
+}
+
+app.delete("/api/queues/:queue/messages/:index", async (request, response) => {
+  const { queue, index } = request.params;
+  const { payload } = request.body || {};
+  if (!queues.includes(queue))
+    return response.status(404).json({ error: "Fila nao configurada." });
+  const targetIndex = Number(index);
+  if (!Number.isInteger(targetIndex) || targetIndex < 0)
+    return response.status(400).json({ error: "Indice invalido." });
+
+  try {
+    const activeChannel = await getChannel();
+    const drained = await drainQueue(activeChannel, queue);
+    const target = drained[targetIndex];
+    const matches =
+      target && (payload == null || target.content.toString("utf8") === payload);
+
+    if (!matches) {
+      await refillQueue(activeChannel, queue, drained);
+      return response.status(409).json({
+        error: "A fila mudou desde a ultima leitura. Atualize e tente de novo.",
+      });
+    }
+
+    drained.splice(targetIndex, 1);
+    await refillQueue(activeChannel, queue, drained);
+    response.json({ ok: true });
+  } catch (error) {
+    channel = undefined;
+    response.status(503).json({ error: error.message });
+  }
+});
+
 app.post("/api/messages", async (request, response) => {
   const { queue, payload, priority = 0 } = request.body || {};
   if (!queues.includes(queue))

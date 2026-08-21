@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 function parsePayload(message) {
   if (message.payload == null) return null;
   try {
@@ -7,7 +9,29 @@ function parsePayload(message) {
   }
 }
 
-export default function MessageList({ queueName, messages, loading, error, onRefresh }) {
+export default function MessageList({
+  queueName,
+  messages,
+  loading,
+  error,
+  onRefresh,
+  onDelete,
+}) {
+  const [deletingIndex, setDeletingIndex] = useState(null);
+
+  async function handleDelete(event, index, message) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!window.confirm("Excluir esta mensagem da fila? Essa ação não pode ser desfeita."))
+      return;
+    setDeletingIndex(index);
+    try {
+      await onDelete(index, message.payload);
+    } finally {
+      setDeletingIndex(null);
+    }
+  }
+
   return (
     <section className="message-list">
       <header className="message-list__header">
@@ -26,7 +50,7 @@ export default function MessageList({ queueName, messages, loading, error, onRef
       )}
 
       <ul>
-        {messages.map((message) => {
+        {messages.map((message, index) => {
           const parsed = parsePayload(message);
           const credentialId = parsed?.credential?.id;
           const unityId = parsed?.credential?.unityId;
@@ -36,19 +60,39 @@ export default function MessageList({ queueName, messages, loading, error, onRef
               <details>
                 <summary>
                   <div className="message-list__meta">
-                    <span>{message.redelivered ? "reentregue" : "original"}</span>
-                    {message.routingKey && <span>routing key: {message.routingKey}</span>}
+                    <span>
+                      {message.redelivered ? "reentregue" : "original"}
+                    </span>
+                    {message.routingKey && (
+                      <span>routing key: {message.routingKey}</span>
+                    )}
                     {message.properties?.priority != null && (
                       <span>prioridade: {message.properties.priority}</span>
                     )}
+                    <button
+                      type="button"
+                      className="message-list__delete"
+                      title="Excluir mensagem"
+                      aria-label="Excluir mensagem"
+                      disabled={deletingIndex === index}
+                      onClick={(event) => handleDelete(event, index, message)}
+                    >
+                      {deletingIndex === index ? "…" : "🗑"}
+                    </button>
                   </div>
                   <div className="message-list__summary">
-                    {credentialId != null && <span>Credencial: {credentialId}</span>}
+                    {credentialId != null && (
+                      <span>Credencial: {credentialId}</span>
+                    )}
                     {unityId != null && <span>Unidade: {unityId}</span>}
-                    {credentialId == null && unityId == null && <span>Ver mensagem</span>}
+                    {credentialId == null && unityId == null && (
+                      <span>Ver mensagem</span>
+                    )}
                   </div>
                 </summary>
-                <pre>{parsed ? JSON.stringify(parsed, null, 2) : message.payload}</pre>
+                <pre>
+                  {parsed ? JSON.stringify(parsed, null, 2) : message.payload}
+                </pre>
               </details>
             </li>
           );
