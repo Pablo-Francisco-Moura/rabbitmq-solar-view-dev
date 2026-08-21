@@ -2,6 +2,7 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management
     container_name: rabbitmq-sv-dev
+    hostname: rabbitmq
     restart: unless-stopped
     ports:
       - "5673:5672"
