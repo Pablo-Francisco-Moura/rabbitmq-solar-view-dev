@@ -1,9 +1,9 @@
-function formatPayload(message) {
-  if (message.payload == null) return "";
+function parsePayload(message) {
+  if (message.payload == null) return null;
   try {
-    return JSON.stringify(JSON.parse(message.payload), null, 2);
+    return JSON.parse(message.payload);
   } catch {
-    return message.payload;
+    return null;
   }
 }
 
@@ -26,18 +26,33 @@ export default function MessageList({ queueName, messages, loading, error, onRef
       )}
 
       <ul>
-        {messages.map((message) => (
-          <li key={message.id}>
-            <div className="message-list__meta">
-              <span>{message.redelivered ? "reentregue" : "original"}</span>
-              {message.routingKey && <span>routing key: {message.routingKey}</span>}
-              {message.properties?.priority != null && (
-                <span>prioridade: {message.properties.priority}</span>
-              )}
-            </div>
-            <pre>{formatPayload(message)}</pre>
-          </li>
-        ))}
+        {messages.map((message) => {
+          const parsed = parsePayload(message);
+          const credentialId = parsed?.credential?.id;
+          const unityId = parsed?.credential?.unityId;
+
+          return (
+            <li key={message.id}>
+              <details>
+                <summary>
+                  <div className="message-list__meta">
+                    <span>{message.redelivered ? "reentregue" : "original"}</span>
+                    {message.routingKey && <span>routing key: {message.routingKey}</span>}
+                    {message.properties?.priority != null && (
+                      <span>prioridade: {message.properties.priority}</span>
+                    )}
+                  </div>
+                  <div className="message-list__summary">
+                    {credentialId != null && <span>Credencial: {credentialId}</span>}
+                    {unityId != null && <span>Unidade: {unityId}</span>}
+                    {credentialId == null && unityId == null && <span>Ver mensagem</span>}
+                  </div>
+                </summary>
+                <pre>{parsed ? JSON.stringify(parsed, null, 2) : message.payload}</pre>
+              </details>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );

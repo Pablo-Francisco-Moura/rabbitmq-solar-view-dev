@@ -146,7 +146,31 @@ body {
 .message-list li {
   border: 1px solid var(--border);
   border-radius: 8px;
+}
+
+.message-list details {
   padding: 10px;
+}
+
+.message-list summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.message-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.message-list summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.message-list details[open] summary::before {
+  transform: rotate(90deg);
 }
 
 .message-list__meta {
@@ -154,11 +178,18 @@ body {
   gap: 12px;
   color: var(--muted);
   font-size: 0.75rem;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
+  margin-left: 18px;
+}
+
+.message-list__summary {
+  display: flex;
+  gap: 12px;
+  font-weight: 600;
 }
 
 .message-list pre {
-  margin: 0;
+  margin: 10px 0 0;
   white-space: pre-wrap;
   word-break: break-word;
   font-size: 0.85rem;
