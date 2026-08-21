@@ -2,11 +2,19 @@ import { useCallback, useEffect, useState } from "react";
 import QueueCard from "./components/QueueCard.jsx";
 import MessageList from "./components/MessageList.jsx";
 import PublishForm from "./components/PublishForm.jsx";
-import { getQueues, getMessages, publishMessage, deleteMessage } from "./api.js";
+import {
+  getConcessionarias,
+  getQueues,
+  getMessages,
+  publishMessage,
+  deleteMessage,
+} from "./api.js";
 
 const POLL_INTERVAL_MS = 4000;
 
 export default function App() {
+  const [concessionarias, setConcessionarias] = useState([]);
+  const [concessionariaId, setConcessionariaId] = useState(null);
   const [queues, setQueues] = useState([]);
   const [queuesError, setQueuesError] = useState(null);
   const [selectedQueue, setSelectedQueue] = useState(null);
@@ -14,12 +22,14 @@ export default function App() {
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [messagesError, setMessagesError] = useState(null);
 
+  const concessionaria =
+    concessionarias.find((c) => c.id === concessionariaId) || null;
+
   const refreshQueues = useCallback(async () => {
     try {
       const data = await getQueues();
       setQueues(data);
       setQueuesError(null);
-      setSelectedQueue((current) => current || data[0]?.name || null);
     } catch (error) {
       setQueuesError(error.message);
     }
@@ -40,10 +50,23 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    getConcessionarias()
+      .then((data) => {
+        setConcessionarias(data);
+        setConcessionariaId((current) => current || data[0]?.id || null);
+      })
+      .catch((error) => setQueuesError(error.message));
+  }, []);
+
+  useEffect(() => {
     refreshQueues();
     const interval = setInterval(refreshQueues, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [refreshQueues]);
+
+  useEffect(() => {
+    if (concessionaria) setSelectedQueue(concessionaria.queueIn);
+  }, [concessionaria]);
 
   useEffect(() => {
     refreshMessages(selectedQueue);
@@ -67,11 +90,27 @@ export default function App() {
     if (deleteError) setMessagesError(deleteError);
   }
 
+  const visibleQueues = concessionaria
+    ? queues.filter(
+        (q) => q.name === concessionaria.queueIn || q.name === concessionaria.queueOut,
+      )
+    : [];
+
   return (
     <div className="app">
       <header className="app__header">
         <h1>Solar View Dev</h1>
-        <p>Equatorial GO</p>
+        <select
+          className="app__concessionaria"
+          value={concessionariaId || ""}
+          onChange={(event) => setConcessionariaId(event.target.value)}
+        >
+          {concessionarias.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.nome}
+            </option>
+          ))}
+        </select>
       </header>
 
       {queuesError && (
@@ -81,11 +120,11 @@ export default function App() {
       )}
 
       <section className="queue-grid">
-        {queues.map((queue, index) => (
+        {visibleQueues.map((queue) => (
           <QueueCard
             key={queue.name}
             queue={queue}
-            label={index === 0 ? "Entrada" : "Saída"}
+            label={queue.name === concessionaria?.queueIn ? "Entrada" : "Saída"}
             active={queue.name === selectedQueue}
             onSelect={() => setSelectedQueue(queue.name)}
           />
@@ -101,7 +140,11 @@ export default function App() {
           onRefresh={() => refreshMessages(selectedQueue)}
           onDelete={handleDelete}
         />
-        <PublishForm queues={queues} onPublish={handlePublish} />
+        <PublishForm
+          queues={visibleQueues}
+          concessionaria={concessionaria}
+          onPublish={handlePublish}
+        />
       </div>
     </div>
   );

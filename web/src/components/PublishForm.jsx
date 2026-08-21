@@ -1,42 +1,52 @@
 import { useEffect, useState } from "react";
 
-const DEFAULT_PAYLOAD = {
-  companyId: 137,
-  credential: {
-    id: 27535,
-    username: "893.381.389-68",
-    password: "",
-    birthdate: "1973-09-06T00:00:00.000Z",
-    cpf: null,
-    statusCredencial: 2,
-    installationCode: "0001932072701247",
-    newInstallationNumber: "0001932072701247",
-    clientCode: "0001932072701247",
-    contractCode: "0001932072701247",
-    isCompany: 0,
-    userId: 94504,
-    unityId: 935992,
-    integratorId: 65638,
-    concessionaireName: "EQUATORIAL GO",
-    tariffGroup: "B",
-    email: "",
-  },
-  dev: false,
-  base64: true,
-  isPortalAuth: false,
-  priority: 0,
-};
+function buildDefaultPayload(concessionaria) {
+  return {
+    companyId: Number(concessionaria?.id) || 0,
+    credential: {
+      id: 27535,
+      username: "893.381.389-68",
+      password: "",
+      birthdate: "1973-09-06T00:00:00.000Z",
+      cpf: null,
+      statusCredencial: 2,
+      installationCode: "0001932072701247",
+      newInstallationNumber: "0001932072701247",
+      clientCode: "0001932072701247",
+      contractCode: "0001932072701247",
+      isCompany: 0,
+      userId: 94504,
+      unityId: 935992,
+      integratorId: 65638,
+      concessionaireName: concessionaria?.nome || "",
+      tariffGroup: "B",
+      email: "",
+    },
+    dev: false,
+    base64: true,
+    isPortalAuth: false,
+    priority: 0,
+  };
+}
 
-export default function PublishForm({ queues, onPublish }) {
+export default function PublishForm({ queues, concessionaria, onPublish }) {
   const [queue, setQueue] = useState(queues[0]?.name || "");
   const [priority, setPriority] = useState(0);
-  const [text, setText] = useState(JSON.stringify(DEFAULT_PAYLOAD, null, 2));
+  const [text, setText] = useState(() =>
+    JSON.stringify(buildDefaultPayload(concessionaria), null, 2),
+  );
   const [status, setStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!queue && queues[0]) setQueue(queues[0].name);
+    if (!queues.some((item) => item.name === queue)) {
+      setQueue(queues[0]?.name || "");
+    }
   }, [queue, queues]);
+
+  useEffect(() => {
+    setText(JSON.stringify(buildDefaultPayload(concessionaria), null, 2));
+  }, [concessionaria?.id]);
 
   async function handleSubmit(event) {
     event.preventDefault();

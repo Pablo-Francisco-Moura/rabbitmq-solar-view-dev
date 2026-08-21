@@ -31,6 +31,20 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {}
+    },
+    {
+      "name": "idc_equatorial_pa_in",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-max-priority": 2 }
+    },
+    {
+      "name": "idc_equatorial_pa_out",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }
   ],
   "exchanges": [],

@@ -1,0 +1,14 @@
+[
+  {
+    "nome": "EQUATORIAL GOIÁS",
+    "id": "137",
+    "queueIn": "idc_equatorial_go_in",
+    "queueOut": "idc_equatorial_go_out"
+  },
+  {
+    "nome": "EQUATORIAL PARÁ",
+    "id": "24",
+    "queueIn": "idc_equatorial_pa_in",
+    "queueOut": "idc_equatorial_pa_out"
+  }
+]

@@ -36,6 +36,16 @@ body {
   color: var(--muted);
 }
 
+.app__concessionaria {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
 .app__error {
   background: rgba(229, 83, 75, 0.15);
   border: 1px solid var(--error);

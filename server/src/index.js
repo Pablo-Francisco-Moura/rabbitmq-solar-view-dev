@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import express from "express";
 import cors from "cors";
 import amqp from "amqplib";
@@ -8,10 +9,10 @@ const amqpUrl = process.env.AMQP_URL || "amqp://guest:guest@localhost:5672/";
 const rabbitApiUrl = process.env.RABBITMQ_API_URL || "http://localhost:15672";
 const rabbitUser = process.env.RABBITMQ_USER || "guest";
 const rabbitPassword = process.env.RABBITMQ_PASSWORD || "guest";
-const queues = [
-  process.env.QUEUE_IN_NAME || "idc_equatorial_go_in",
-  process.env.QUEUE_OUT_NAME || "idc_equatorial_go_out",
-];
+const concessionarias = JSON.parse(
+  readFileSync(new URL("../concessionarias.json", import.meta.url)),
+);
+const queues = concessionarias.flatMap((c) => [c.queueIn, c.queueOut]);
 
 let connection;
 let channel;
@@ -30,8 +31,10 @@ async function getChannel() {
     console.error("RabbitMQ connection error:", error.message),
   );
   channel = await connection.createConfirmChannel();
-  await channel.assertQueue(queues[0], { durable: true, maxPriority: 2 });
-  await channel.assertQueue(queues[1], { durable: true });
+  for (const c of concessionarias) {
+    await channel.assertQueue(c.queueIn, { durable: true, maxPriority: 2 });
+    await channel.assertQueue(c.queueOut, { durable: true });
+  }
   return channel;
 }
 
@@ -53,6 +56,10 @@ async function rabbitRequest(path, options = {}) {
     );
   return response.json();
 }
+
+app.get("/api/concessionarias", (_request, response) => {
+  response.json(concessionarias);
+});
 
 app.get("/api/health", async (_request, response) => {
   try {

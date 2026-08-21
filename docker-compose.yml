@@ -31,10 +31,9 @@ services:
       RABBITMQ_API_URL: http://rabbitmq:15672
       RABBITMQ_USER: ${RABBITMQ_USER:-guest}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
-      QUEUE_IN_NAME: idc_equatorial_go_in
-      QUEUE_OUT_NAME: idc_equatorial_go_out
     volumes:
       - ./server/src:/app/src:ro
+      - ./rabbitmq/concessionarias.json:/app/concessionarias.json:ro
     command: ["npm", "run", "dev"]
     ports:
       - "3000:3000"

@@ -8,6 +8,8 @@ async function request(path, options) {
   return body;
 }
 
+export const getConcessionarias = () => request("/concessionarias");
+
 export const getQueues = () => request("/queues");
 
 export const getMessages = (queue) =>
