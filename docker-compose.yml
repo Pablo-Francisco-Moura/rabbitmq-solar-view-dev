@@ -1,0 +1,53 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq-sv-dev
+    restart: unless-stopped
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [solarview-dev]
+
+  api:
+    build: ./server
+    container_name: api-sv-dev
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      AMQP_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672/
+      RABBITMQ_API_URL: http://rabbitmq:15672
+      RABBITMQ_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
+      QUEUE_IN_NAME: idc_equatorial_go_in
+      QUEUE_OUT_NAME: idc_equatorial_go_out
+    ports:
+      - "3000:3000"
+    networks: [solarview-dev]
+
+  web:
+    build: ./web
+    container_name: web-sv-dev
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "8080:80"
+    networks: [solarview-dev]
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  solarview-dev:
+    driver: bridge
