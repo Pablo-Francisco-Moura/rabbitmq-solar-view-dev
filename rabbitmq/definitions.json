@@ -1,0 +1,38 @@
+{
+  "vhosts": [{ "name": "/" }],
+  "users": [
+    {
+      "name": "guest",
+      "password_hash": "OjAb3N7RmIiWkfPtlbUXyMNjl3NuZSA4qHCyD9JJ8/3lWXl3",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": ["administrator"]
+    }
+  ],
+  "permissions": [
+    {
+      "user": "guest",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "queues": [
+    {
+      "name": "idc_equatorial_go_in",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": { "x-max-priority": 2 }
+    },
+    {
+      "name": "idc_equatorial_go_out",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [],
+  "bindings": []
+}
