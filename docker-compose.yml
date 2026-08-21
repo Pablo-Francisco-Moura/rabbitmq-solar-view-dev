@@ -33,6 +33,9 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-guest}
       QUEUE_IN_NAME: idc_equatorial_go_in
       QUEUE_OUT_NAME: idc_equatorial_go_out
+    volumes:
+      - ./server/src:/app/src:ro
+    command: ["npm", "run", "dev"]
     ports:
       - "3000:3000"
     networks: [solarview-dev]
@@ -42,8 +45,14 @@ services:
     container_name: web-sv-dev
     restart: unless-stopped
     depends_on: [api]
+    environment:
+      VITE_API_PROXY_TARGET: http://api:3000
+    volumes:
+      - ./web/src:/app/src:ro
+      - ./web/index.html:/app/index.html:ro
+      - ./web/vite.config.js:/app/vite.config.js:ro
     ports:
-      - "8080:80"
+      - "8080:5173"
     networks: [solarview-dev]
 
 volumes:

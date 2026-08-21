@@ -4,11 +4,14 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node --watch src/index.js"
+    "dev": "nodemon --legacy-watch src/index.js"
   },
   "dependencies": {
     "amqplib": "^0.10.9",
     "cors": "^2.8.5",
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
   }
 }
