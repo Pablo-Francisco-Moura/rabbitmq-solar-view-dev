@@ -144,6 +144,19 @@ export async function updateUnidadeInstallationCodes(
   return getUnidadeDetails(unidadeId);
 }
 
+// Dado um conjunto de unidadeIds (geradoras e/ou beneficiarias misturadas),
+// retorna todos os vinculos gestaoSCEE que tocam qualquer uma delas.
+export async function getGestaoSceeByUnidadeIds(unidadeIds) {
+  if (!unidadeIds.length) return [];
+  const db = getPool();
+  const [rows] = await db.query(
+    `SELECT * FROM gestaoSCEE
+     WHERE unidadeGeradoraId IN (?) OR unidadeBeneficiariaId IN (?)`,
+    [unidadeIds, unidadeIds],
+  );
+  return rows;
+}
+
 // Usado so para exibicao (titulo da mensagem na UI) — nunca entra no payload do job.
 export async function getUnidadeNomes(unidadeIds) {
   if (!unidadeIds.length) return {};

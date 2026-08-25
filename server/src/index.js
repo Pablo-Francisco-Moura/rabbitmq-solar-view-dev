@@ -7,6 +7,7 @@ import {
   getUnidadeNomes,
   getUnidadeDetails,
   updateUnidadeInstallationCodes,
+  getGestaoSceeByUnidadeIds,
 } from "./db.js";
 
 const app = express();
@@ -196,6 +197,19 @@ app.get("/api/unidades/nomes", async (request, response) => {
   try {
     const nomes = await getUnidadeNomes(ids);
     response.json(nomes);
+  } catch (error) {
+    response.status(502).json({ error: error.message });
+  }
+});
+
+app.get("/api/gestao-scee", async (request, response) => {
+  const ids = String(request.query.ids || "")
+    .split(",")
+    .map((id) => Number(id.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+  try {
+    const vinculos = await getGestaoSceeByUnidadeIds(ids);
+    response.json(vinculos);
   } catch (error) {
     response.status(502).json({ error: error.message });
   }
