@@ -60,14 +60,56 @@ body {
   gap: 6px;
   font-size: 0.85rem;
   color: var(--muted);
+  min-width: 260px;
 }
 
-.units-search input {
+.units-search input,
+.units-search textarea {
   background: #0f1115;
   border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--text);
   padding: 8px;
+  font-family: inherit;
+}
+
+.units-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.units-tabs__button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-weight: 400;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.units-tabs__button:hover {
+  border-color: var(--accent);
+}
+
+.units-tabs__button--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.units-tabs__button strong {
+  font-size: 0.9rem;
+}
+
+.units-tabs__button span {
+  color: var(--muted);
+  font-size: 0.72rem;
 }
 
 .units-details {
