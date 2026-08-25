@@ -9,6 +9,8 @@ const RELATORIO_PRIORITY_COLUMNS = [
   "faturaDataReferencia",
   "faturaCodigoInstalacao",
   "faturaNewCodigoInstalacao",
+  "unidade_unidadeId",
+  "faturaCriacao",
 ];
 const SORTABLE_RELATORIO_COLUMNS = [
   "faturaMesReferencia",
