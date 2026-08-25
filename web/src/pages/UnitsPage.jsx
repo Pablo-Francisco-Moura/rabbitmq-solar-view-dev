@@ -55,6 +55,9 @@ export default function UnitsPage() {
   const [copied, setCopied] = useState(false);
 
   const searchIds = parseUnidadeIds(searchText);
+  const totalCopyIds =
+    groups.reduce((sum, group) => sum + 1 + group.beneficiarias.length, 0) +
+    notFoundIds.length;
 
   useEffect(() => {
     try {
@@ -136,9 +139,9 @@ export default function UnitsPage() {
         <button
           type="button"
           onClick={handleCopyIds}
-          disabled={groups.length === 0 && notFoundIds.length === 0}
+          disabled={totalCopyIds === 0}
         >
-          {copied ? "Copiado!" : "Copiar IDs das unidades"}
+          {copied ? "Copiado!" : `Copiar IDs das unidades (${totalCopyIds})`}
         </button>
       </form>
 
