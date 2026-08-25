@@ -1,27 +1,10 @@
 import { useEffect, useState } from "react";
+import { getUnidadePayload } from "../api.js";
 
-function buildDefaultPayload(concessionaria) {
+function buildEmptyPayload(concessionaria) {
   return {
     companyId: Number(concessionaria?.id) || 0,
-    credential: {
-      id: 27535,
-      username: "893.381.389-68",
-      password: "",
-      birthdate: "1973-09-06T00:00:00.000Z",
-      cpf: null,
-      statusCredencial: 2,
-      installationCode: "0001932072701247",
-      newInstallationNumber: "0001932072701247",
-      clientCode: "0001932072701247",
-      contractCode: "0001932072701247",
-      isCompany: 0,
-      userId: 94504,
-      unityId: 935992,
-      integratorId: 65638,
-      concessionaireName: concessionaria?.nome || "",
-      tariffGroup: "B",
-      email: "",
-    },
+    credential: {},
     dev: false,
     base64: true,
     isPortalAuth: false,
@@ -32,8 +15,10 @@ function buildDefaultPayload(concessionaria) {
 export default function PublishForm({ queues, concessionaria, onPublish }) {
   const [queue, setQueue] = useState(queues[0]?.name || "");
   const [priority, setPriority] = useState(0);
+  const [unidadeId, setUnidadeId] = useState("");
+  const [fetchingUnidade, setFetchingUnidade] = useState(false);
   const [text, setText] = useState(() =>
-    JSON.stringify(buildDefaultPayload(concessionaria), null, 2),
+    JSON.stringify(buildEmptyPayload(concessionaria), null, 2),
   );
   const [status, setStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
@@ -45,8 +30,22 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
   }, [queue, queues]);
 
   useEffect(() => {
-    setText(JSON.stringify(buildDefaultPayload(concessionaria), null, 2));
+    setText(JSON.stringify(buildEmptyPayload(concessionaria), null, 2));
   }, [concessionaria?.id]);
+
+  async function handleFetchUnidade() {
+    if (!unidadeId) return;
+    setStatus(null);
+    setFetchingUnidade(true);
+    try {
+      const payload = await getUnidadePayload(unidadeId);
+      setText(JSON.stringify(payload, null, 2));
+    } catch (error) {
+      setStatus({ ok: false, message: error.message });
+    } finally {
+      setFetchingUnidade(false);
+    }
+  }
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -97,6 +96,26 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
             onChange={(event) => setPriority(event.target.value)}
           />
         </label>
+      </div>
+
+      <div className="publish-form__row">
+        <label>
+          Unidade ID
+          <input
+            type="number"
+            min={1}
+            placeholder="Ex: 712383"
+            value={unidadeId}
+            onChange={(event) => setUnidadeId(event.target.value)}
+          />
+        </label>
+        <button
+          type="button"
+          onClick={handleFetchUnidade}
+          disabled={!unidadeId || fetchingUnidade}
+        >
+          {fetchingUnidade ? "Buscando…" : "Buscar dados da unidade"}
+        </button>
       </div>
 
       <label>
