@@ -2,6 +2,12 @@ import { readFileSync } from "node:fs";
 import express from "express";
 import cors from "cors";
 import amqp from "amqplib";
+import {
+  getUnidadeJobPayload,
+  getUnidadeNomes,
+  getUnidadeDetails,
+  updateUnidadeInstallationCodes,
+} from "./db.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -179,6 +185,75 @@ app.delete("/api/queues/:queue/messages/:index", async (request, response) => {
   } catch (error) {
     channel = undefined;
     response.status(503).json({ error: error.message });
+  }
+});
+
+app.get("/api/unidades/nomes", async (request, response) => {
+  const ids = String(request.query.ids || "")
+    .split(",")
+    .map((id) => Number(id.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+  try {
+    const nomes = await getUnidadeNomes(ids);
+    response.json(nomes);
+  } catch (error) {
+    response.status(502).json({ error: error.message });
+  }
+});
+
+app.get("/api/unidades/:unidadeId", async (request, response) => {
+  const unidadeId = Number(request.params.unidadeId);
+  if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+    return response.status(400).json({ error: "unidadeId invalido." });
+  try {
+    const details = await getUnidadeDetails(unidadeId);
+    response.json(details);
+  } catch (error) {
+    const notFound = /nao encontrad/.test(error.message);
+    response.status(notFound ? 404 : 502).json({ error: error.message });
+  }
+});
+
+app.patch(
+  "/api/unidades/:unidadeId/codigos-instalacao",
+  async (request, response) => {
+    const unidadeId = Number(request.params.unidadeId);
+    if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+      return response.status(400).json({ error: "unidadeId invalido." });
+    const { faturaCodigoInstalacao, faturaNewCodigoInstalacao } =
+      request.body || {};
+    if (
+      (faturaCodigoInstalacao != null &&
+        typeof faturaCodigoInstalacao !== "string") ||
+      (faturaNewCodigoInstalacao != null &&
+        typeof faturaNewCodigoInstalacao !== "string")
+    )
+      return response
+        .status(400)
+        .json({ error: "Codigos devem ser texto." });
+    try {
+      const details = await updateUnidadeInstallationCodes(unidadeId, {
+        faturaCodigoInstalacao: faturaCodigoInstalacao ?? null,
+        faturaNewCodigoInstalacao: faturaNewCodigoInstalacao ?? null,
+      });
+      response.json(details);
+    } catch (error) {
+      const notFound = /nao encontrad/.test(error.message);
+      response.status(notFound ? 404 : 502).json({ error: error.message });
+    }
+  },
+);
+
+app.get("/api/unidades/:unidadeId/job-payload", async (request, response) => {
+  const unidadeId = Number(request.params.unidadeId);
+  if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+    return response.status(400).json({ error: "unidadeId invalido." });
+  try {
+    const payload = await getUnidadeJobPayload(unidadeId);
+    response.json(payload);
+  } catch (error) {
+    const notFound = /nao encontrad/.test(error.message);
+    response.status(notFound ? 404 : 502).json({ error: error.message });
   }
 });
 
