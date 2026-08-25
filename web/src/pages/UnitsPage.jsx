@@ -13,15 +13,15 @@ function loadStoredState() {
   }
 }
 
-function buildCopyText(groups) {
-  return groups
-    .map((group) =>
-      [
-        group.geradoraId,
-        ...group.beneficiarias.map((vinculo) => vinculo.unidadeBeneficiariaId),
-      ].join("\n"),
-    )
-    .join("\n\n");
+function buildCopyText(groups, notFoundIds) {
+  const blocks = groups.map((group) =>
+    [
+      group.geradoraId,
+      ...group.beneficiarias.map((vinculo) => vinculo.unidadeBeneficiariaId),
+    ].join("\n"),
+  );
+  for (const id of notFoundIds) blocks.push(String(id));
+  return blocks.join("\n\n");
 }
 
 function groupByGeradora(vinculos) {
@@ -99,7 +99,7 @@ export default function UnitsPage() {
 
   async function handleCopyIds() {
     try {
-      await navigator.clipboard.writeText(buildCopyText(groups));
+      await navigator.clipboard.writeText(buildCopyText(groups, notFoundIds));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -136,7 +136,7 @@ export default function UnitsPage() {
         <button
           type="button"
           onClick={handleCopyIds}
-          disabled={groups.length === 0}
+          disabled={groups.length === 0 && notFoundIds.length === 0}
         >
           {copied ? "Copiado!" : "Copiar IDs das unidades"}
         </button>
