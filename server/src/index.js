@@ -72,15 +72,18 @@ app.get("/api/health", async (_request, response) => {
 
 app.get("/api/queues", async (_request, response) => {
   try {
+    const activeChannel = await getChannel();
     const details = await Promise.all(
       queues.map(async (queue) => {
-        const data = await rabbitRequest(
-          `/api/queues/%2F/${encodeURIComponent(queue)}`,
-        );
+        const [data, brokerData] = await Promise.all([
+          rabbitRequest(`/api/queues/%2F/${encodeURIComponent(queue)}`),
+          activeChannel.checkQueue(queue),
+        ]);
+        const messagesReady = brokerData.messageCount ?? data.messages_ready ?? 0;
         return {
           name: queue,
-          messages: data.messages ?? 0,
-          messagesReady: data.messages_ready ?? 0,
+          messages: messagesReady + (data.messages_unacknowledged ?? 0),
+          messagesReady,
           messagesUnacknowledged: data.messages_unacknowledged ?? 0,
           consumers: data.consumers ?? 0,
         };
