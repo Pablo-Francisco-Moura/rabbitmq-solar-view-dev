@@ -230,7 +230,7 @@ export default function UnitPage() {
   return (
     <div>
       <header className="app__header">
-        <h1>Unit</h1>
+        <h1>Informações da Unidade</h1>
       </header>
 
       <form className="units-search" onSubmit={handleSearch}>

@@ -105,7 +105,7 @@ export default function QueuesPage() {
   return (
     <div>
       <header className="app__header">
-        <h1>Solar View Dev</h1>
+        <h1>Filas das concessionárias</h1>
         <select
           className="app__concessionaria"
           value={concessionariaId || ""}
