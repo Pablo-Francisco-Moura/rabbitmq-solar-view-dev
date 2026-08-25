@@ -10,6 +10,24 @@ const RELATORIO_PRIORITY_COLUMNS = [
   "faturaNewCodigoInstalacao",
 ];
 const SORTABLE_RELATORIO_COLUMNS = ["faturaMesReferencia", "faturaDataReferencia"];
+const UNIDADE_FIELD_ORDER = [
+  "unidadeId",
+  "uniNome",
+  "uniAtiva",
+  "concessionaria_concessionariaId",
+  "uniIntegradorResponsavel",
+  "faturaCodigoInstalacao",
+  "faturaNewCodigoInstalacao",
+];
+
+function orderUnidadeFields(unidade) {
+  const keys = Object.keys(unidade);
+  const priority = UNIDADE_FIELD_ORDER.filter((key) => keys.includes(key));
+  const rest = keys.filter((key) => !UNIDADE_FIELD_ORDER.includes(key));
+  const ordered = {};
+  for (const key of [...priority, ...rest]) ordered[key] = unidade[key];
+  return ordered;
+}
 
 function loadStoredState() {
   try {
@@ -178,11 +196,10 @@ export default function UnitPage() {
         <>
           <div className="app__grid">
             <section className="units-details">
-              <h2>
-                Unidade: {details.unidade.unidadeId} - Nome:{" "}
-                {details.unidade.uniNome}
-              </h2>
-              <pre>{JSON.stringify(details.unidade, null, 2)}</pre>
+              <h2>Unidade</h2>
+              <pre>
+                {JSON.stringify(orderUnidadeFields(details.unidade), null, 2)}
+              </pre>
 
               <h2>Fatura Credencial</h2>
               {details.faturaCredencial ? (
