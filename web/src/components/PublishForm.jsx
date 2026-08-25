@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getUnidadePayload } from "../api.js";
+import { parseUnidadeIds } from "../unidadeIds.js";
 
 function buildEmptyPayload(concessionaria) {
   return {
@@ -15,13 +16,21 @@ function buildEmptyPayload(concessionaria) {
 export default function PublishForm({ queues, concessionaria, onPublish }) {
   const [queue, setQueue] = useState(queues[0]?.name || "");
   const [priority, setPriority] = useState(0);
-  const [unidadeId, setUnidadeId] = useState("");
-  const [fetchingUnidade, setFetchingUnidade] = useState(false);
+  const [unidadeIdsText, setUnidadeIdsText] = useState("");
+  const [fetching, setFetching] = useState(false);
+  const [fetchDone, setFetchDone] = useState(0);
   const [text, setText] = useState(() =>
     JSON.stringify(buildEmptyPayload(concessionaria), null, 2),
   );
   const [status, setStatus] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitDone, setSubmitDone] = useState(0);
+  const [submitTotal, setSubmitTotal] = useState(null);
+
+  const unidadeIds = useMemo(
+    () => parseUnidadeIds(unidadeIdsText),
+    [unidadeIdsText],
+  );
 
   useEffect(() => {
     if (!queues.some((item) => item.name === queue)) {
@@ -34,16 +43,48 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
   }, [concessionaria?.id]);
 
   async function handleFetchUnidade() {
-    if (!unidadeId) return;
+    if (unidadeIds.length === 0) return;
     setStatus(null);
-    setFetchingUnidade(true);
-    try {
-      const payload = await getUnidadePayload(unidadeId);
-      setText(JSON.stringify(payload, null, 2));
-    } catch (error) {
-      setStatus({ ok: false, message: error.message });
-    } finally {
-      setFetchingUnidade(false);
+    setFetching(true);
+    setFetchDone(0);
+
+    if (unidadeIds.length === 1) {
+      try {
+        const payload = await getUnidadePayload(unidadeIds[0]);
+        setText(JSON.stringify(payload, null, 2));
+      } catch (error) {
+        setStatus({ ok: false, message: error.message });
+      } finally {
+        setFetching(false);
+      }
+      return;
+    }
+
+    const payloads = [];
+    const failures = [];
+    for (const id of unidadeIds) {
+      try {
+        payloads.push(await getUnidadePayload(id));
+      } catch (error) {
+        failures.push({ id, message: error.message });
+      }
+      setFetchDone((current) => current + 1);
+    }
+    setFetching(false);
+
+    if (payloads.length > 0) setText(JSON.stringify(payloads, null, 2));
+    if (failures.length === 0) {
+      setStatus({
+        ok: true,
+        message: `${payloads.length} unidades encontradas.`,
+      });
+    } else {
+      setStatus({
+        ok: false,
+        message: `${payloads.length}/${unidadeIds.length} encontradas. Falhas: ${failures
+          .map((failure) => `${failure.id}: ${failure.message}`)
+          .join("; ")}`,
+      });
     }
   }
 
@@ -59,16 +100,62 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
       return;
     }
 
+    if (!Array.isArray(payload)) {
+      setSubmitting(true);
+      setSubmitTotal(null);
+      try {
+        await onPublish(queue, payload, Number(priority));
+        setStatus({ ok: true, message: "Mensagem publicada." });
+      } catch (error) {
+        setStatus({ ok: false, message: error.message });
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    if (payload.length === 0) {
+      setStatus({ ok: false, message: "A lista de mensagens está vazia." });
+      return;
+    }
+
     setSubmitting(true);
-    try {
-      await onPublish(queue, payload, Number(priority));
-      setStatus({ ok: true, message: "Mensagem publicada." });
-    } catch (error) {
-      setStatus({ ok: false, message: error.message });
-    } finally {
-      setSubmitting(false);
+    setSubmitDone(0);
+    setSubmitTotal(payload.length);
+    const failures = [];
+    for (let index = 0; index < payload.length; index++) {
+      try {
+        await onPublish(queue, payload[index], Number(priority));
+      } catch (error) {
+        failures.push({ index, message: error.message });
+      }
+      setSubmitDone((current) => current + 1);
+    }
+    setSubmitting(false);
+
+    const okCount = payload.length - failures.length;
+    if (failures.length === 0) {
+      setStatus({ ok: true, message: `${okCount} mensagens publicadas.` });
+    } else {
+      setStatus({
+        ok: false,
+        message: `${okCount}/${payload.length} publicadas. Falhas: ${failures
+          .map((failure) => `#${failure.index + 1}: ${failure.message}`)
+          .join("; ")}`,
+      });
     }
   }
+
+  const fetchLabel =
+    unidadeIds.length > 1
+      ? `Buscar ${unidadeIds.length} unidades`
+      : "Buscar dados da unidade";
+
+  const submitLabel = !submitting
+    ? "Publicar"
+    : submitTotal != null
+      ? `Publicando ${submitDone}/${submitTotal}…`
+      : "Publicando…";
 
   return (
     <form className="publish-form" onSubmit={handleSubmit}>
@@ -77,7 +164,10 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
       <div className="publish-form__row">
         <label>
           Fila
-          <select value={queue} onChange={(event) => setQueue(event.target.value)}>
+          <select
+            value={queue}
+            onChange={(event) => setQueue(event.target.value)}
+          >
             {queues.map((item) => (
               <option key={item.name} value={item.name}>
                 {item.name}
@@ -100,21 +190,21 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
 
       <div className="publish-form__row">
         <label>
-          Unidade ID
-          <input
-            type="number"
-            min={1}
-            placeholder="Ex: 712383"
-            value={unidadeId}
-            onChange={(event) => setUnidadeId(event.target.value)}
+          Unidade ID (uma ou várias, separadas por espaço, vírgula ou linha)
+          <textarea
+            rows={5}
+            placeholder={"Ex: 712383\nou várias:\n97335\n931571\n931572"}
+            value={unidadeIdsText}
+            onChange={(event) => setUnidadeIdsText(event.target.value)}
           />
         </label>
         <button
           type="button"
+          style={{ alignSelf: "flex-end" }}
           onClick={handleFetchUnidade}
-          disabled={!unidadeId || fetchingUnidade}
+          disabled={unidadeIds.length === 0 || fetching}
         >
-          {fetchingUnidade ? "Buscando…" : "Buscar dados da unidade"}
+          {fetching ? "Buscando…" : fetchLabel}
         </button>
       </div>
 
@@ -130,10 +220,12 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
 
       <div className="publish-form__actions">
         <button type="submit" disabled={submitting}>
-          {submitting ? "Publicando…" : "Publicar"}
+          {submitLabel}
         </button>
         {status && (
-          <span className={status.ok ? "status status--ok" : "status status--error"}>
+          <span
+            className={status.ok ? "status status--ok" : "status status--error"}
+          >
             {status.message}
           </span>
         )}
