@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getUnidadeNomes } from "../api.js";
 
 function parsePayload(message) {
   if (message.payload == null) return null;
@@ -18,6 +19,23 @@ export default function MessageList({
   onDelete,
 }) {
   const [deletingIndex, setDeletingIndex] = useState(null);
+  const [unidadeNomes, setUnidadeNomes] = useState({});
+
+  useEffect(() => {
+    const unityIds = [
+      ...new Set(
+        messages
+          .map((message) => parsePayload(message)?.credential?.unityId)
+          .filter((id) => id != null && !(id in unidadeNomes)),
+      ),
+    ];
+    if (unityIds.length === 0) return;
+    getUnidadeNomes(unityIds)
+      .then((nomes) =>
+        setUnidadeNomes((current) => ({ ...current, ...nomes })),
+      )
+      .catch(() => {});
+  }, [messages]);
 
   async function handleDelete(event, index, message) {
     event.preventDefault();
@@ -54,6 +72,12 @@ export default function MessageList({
           const parsed = parsePayload(message);
           const credentialId = parsed?.credential?.id;
           const unityId = parsed?.credential?.unityId;
+          const titleParts = [];
+          if (credentialId != null) titleParts.push(`Credencial: ${credentialId}`);
+          if (unityId != null) {
+            titleParts.push(`Unidade: ${unityId}`);
+            titleParts.push(`Nome: ${unidadeNomes[unityId] ?? "—"}`);
+          }
 
           return (
             <li key={message.id}>
@@ -81,11 +105,9 @@ export default function MessageList({
                     </button>
                   </div>
                   <div className="message-list__summary">
-                    {credentialId != null && (
-                      <span>Credencial: {credentialId}</span>
-                    )}
-                    {unityId != null && <span>Unidade: {unityId}</span>}
-                    {credentialId == null && unityId == null && (
+                    {titleParts.length > 0 ? (
+                      <span>{titleParts.join(" - ")}</span>
+                    ) : (
                       <span>Ver mensagem</span>
                     )}
                   </div>

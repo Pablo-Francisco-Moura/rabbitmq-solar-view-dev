@@ -15,6 +15,9 @@ export const getQueues = () => request("/queues");
 export const getMessages = (queue) =>
   request(`/queues/${encodeURIComponent(queue)}/messages`);
 
+export const getUnidadeNomes = (unidadeIds) =>
+  request(`/unidades/nomes?ids=${unidadeIds.join(",")}`);
+
 export const publishMessage = (queue, payload, priority) =>
   request("/messages", {
     method: "POST",
