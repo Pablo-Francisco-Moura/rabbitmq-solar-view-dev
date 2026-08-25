@@ -30,6 +30,9 @@ export const updateUnidadeInstallationCodes = (unidadeId, codes) =>
     body: JSON.stringify(codes),
   });
 
+export const getGestaoScee = (unidadeIds) =>
+  request(`/gestao-scee?ids=${unidadeIds.join(",")}`);
+
 export const publishMessage = (queue, payload, priority) =>
   request("/messages", {
     method: "POST",
