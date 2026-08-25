@@ -21,6 +21,15 @@ export const getUnidadeNomes = (unidadeIds) =>
 export const getUnidadePayload = (unidadeId) =>
   request(`/unidades/${encodeURIComponent(unidadeId)}/job-payload`);
 
+export const getUnidadeDetails = (unidadeId) =>
+  request(`/unidades/${encodeURIComponent(unidadeId)}`);
+
+export const updateUnidadeInstallationCodes = (unidadeId, codes) =>
+  request(`/unidades/${encodeURIComponent(unidadeId)}/codigos-instalacao`, {
+    method: "PATCH",
+    body: JSON.stringify(codes),
+  });
+
 export const publishMessage = (queue, payload, priority) =>
   request("/messages", {
     method: "POST",

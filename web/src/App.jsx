@@ -1,5 +1,6 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import QueuesPage from "./pages/QueuesPage.jsx";
+import UnitPage from "./pages/UnitPage.jsx";
 
 export default function App() {
   return (
@@ -11,11 +12,18 @@ export default function App() {
         >
           Filas
         </NavLink>
+        <NavLink
+          to="/unit"
+          className={({ isActive }) => (isActive ? "active" : "")}
+        >
+          Unit
+        </NavLink>
       </nav>
 
       <Routes>
         <Route path="/" element={<Navigate to="/queues" replace />} />
         <Route path="/queues" element={<QueuesPage />} />
+        <Route path="/unit" element={<UnitPage />} />
       </Routes>
     </div>
   );
