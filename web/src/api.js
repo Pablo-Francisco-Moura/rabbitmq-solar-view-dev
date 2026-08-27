@@ -33,6 +33,12 @@ export const updateUnidadeInstallationCodes = (unidadeId, codes) =>
 export const getGestaoScee = (unidadeIds) =>
   request(`/gestao-scee?ids=${unidadeIds.join(",")}`);
 
+export const extractFatura = (env, companyId, url) =>
+  request("/extract", {
+    method: "POST",
+    body: JSON.stringify({ env, companyId, url }),
+  });
+
 export const publishMessage = (queue, payload, priority) =>
   request("/messages", {
     method: "POST",

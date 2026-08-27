@@ -16,6 +16,10 @@ const amqpUrl = process.env.AMQP_URL || "amqp://guest:guest@localhost:5672/";
 const rabbitApiUrl = process.env.RABBITMQ_API_URL || "http://localhost:15672";
 const rabbitUser = process.env.RABBITMQ_USER || "guest";
 const rabbitPassword = process.env.RABBITMQ_PASSWORD || "guest";
+const extractApiUrls = {
+  local: process.env.EXTRACT_API_URL_LOCAL || "http://localhost:4001",
+  prod: process.env.EXTRACT_API_URL_PROD || "http://idc.solarview.com.br:4001",
+};
 const concessionarias = JSON.parse(
   readFileSync(new URL("../concessionarias.json", import.meta.url)),
 );
@@ -268,6 +272,42 @@ app.get("/api/unidades/:unidadeId/job-payload", async (request, response) => {
   } catch (error) {
     const notFound = /nao encontrad/.test(error.message);
     response.status(notFound ? 404 : 502).json({ error: error.message });
+  }
+});
+
+app.post("/api/extract", async (request, response) => {
+  const { env, url, companyId } = request.body || {};
+  const baseUrl = extractApiUrls[env];
+  if (!baseUrl)
+    return response
+      .status(400)
+      .json({ error: `Ambiente de extracao invalido: ${env}` });
+  const companyIdNumber = Number(companyId);
+  if (!url || typeof url !== "string" || !Number.isInteger(companyIdNumber))
+    return response
+      .status(400)
+      .json({ error: "url e companyId sao obrigatorios." });
+  try {
+    const extractResponse = await fetch(`${baseUrl}/extract`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ url, companyId: companyIdNumber }),
+    });
+    const text = await extractResponse.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = { error: text || `Erro ${extractResponse.status}` };
+    }
+    response.status(extractResponse.status).json(data);
+  } catch (error) {
+    const detail = error.cause?.code || error.cause?.message;
+    response.status(502).json({
+      error: detail
+        ? `Falha ao conectar em ${baseUrl}/extract: ${detail}`
+        : error.message,
+    });
   }
 });
 

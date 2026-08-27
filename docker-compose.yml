@@ -36,6 +36,8 @@ services:
       IDC_MYSQL_USER_PROD: ${IDC_MYSQL_USER_PROD}
       IDC_MYSQL_PASS_PROD: ${IDC_MYSQL_PASS_PROD}
       IDC_MYSQL_DB_PROD: ${IDC_MYSQL_DB_PROD}
+      EXTRACT_API_URL_LOCAL: ${EXTRACT_API_URL_LOCAL:-http://localhost:4001}
+      EXTRACT_API_URL_PROD: ${EXTRACT_API_URL_PROD:-http://idc.solarview.com.br:4001}
     volumes:
       - ./server/src:/app/src:ro
       - ./rabbitmq/concessionarias.json:/app/concessionarias.json:ro
