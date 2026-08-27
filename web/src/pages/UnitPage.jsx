@@ -201,6 +201,14 @@ function getMissingMonths(relatorio) {
     .reverse();
 }
 
+// 'YYYY-MM-DD' (dateStrings:true no server) interpretado no fuso LOCAL do
+// navegador - new Date('YYYY-MM-DD') direto interpreta como meia-noite UTC,
+// e em fuso negativo (Brasil, UTC-3) getDate()/getMonth() voltam um dia.
+function parseDateOnly(dateStr) {
+  const [year, month, day] = String(dateStr).slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 // Ultima linha do relatorio com faturaDataLeituraAtual preenchida (mes mais
 // recente presente) - usada pra estimar quando a proxima fatura deve sair.
 function getLastReadingDate(relatorio) {
@@ -218,7 +226,7 @@ function getLastReadingDate(relatorio) {
       latestReading = row.faturaDataLeituraAtual;
     }
   }
-  return latestReading ? new Date(latestReading) : null;
+  return latestReading ? parseDateOnly(latestReading) : null;
 }
 
 function addDays(date, days) {
