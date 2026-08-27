@@ -45,6 +45,7 @@ const CREDENCIAL_SUMMARY_FIELDS = [
   "flagExcluida",
 ];
 const CONCESSIONARIA_SUMMARY_FIELDS = ["concessionariaId", "nomeConcessionaria"];
+const RELATORIO_VISIBLE_ROWS = 12;
 
 function orderFields(object, priorityFields) {
   const keys = Object.keys(object);
@@ -226,6 +227,7 @@ export default function UnitPage() {
     faturaCredencial: false,
     concessionaria: false,
   });
+  const [showAllRelatorio, setShowAllRelatorio] = useState(false);
 
   function toggleSection(name) {
     setExpandedSections((current) => ({
@@ -270,6 +272,7 @@ export default function UnitPage() {
       faturaCredencial: false,
       concessionaria: false,
     });
+    setShowAllRelatorio(false);
   }
 
   async function handleSearch(event) {
@@ -365,6 +368,10 @@ export default function UnitPage() {
     const valueB = b[relatorioSortColumn] ?? "";
     return valueB > valueA ? 1 : valueB < valueA ? -1 : 0;
   });
+  const visibleRelatorio = showAllRelatorio
+    ? sortedRelatorio
+    : sortedRelatorio.slice(0, RELATORIO_VISIBLE_ROWS);
+  const hiddenRelatorioCount = sortedRelatorio.length - visibleRelatorio.length;
   const missingMonths = getMissingMonths(relatorio);
 
   return (
@@ -610,7 +617,7 @@ export default function UnitPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {sortedRelatorio.map((row, index) => (
+                    {visibleRelatorio.map((row, index) => (
                       <tr key={row.faturaId ?? index}>
                         {relatorioColumns.map((column) => (
                           <td key={column}>{String(row[column] ?? "")}</td>
@@ -619,6 +626,25 @@ export default function UnitPage() {
                     ))}
                   </tbody>
                 </table>
+                {hiddenRelatorioCount > 0 && (
+                  <button
+                    type="button"
+                    className="units-relatorio__toggle"
+                    onClick={() => setShowAllRelatorio(true)}
+                  >
+                    Mostrar mais ({hiddenRelatorioCount})
+                  </button>
+                )}
+                {showAllRelatorio &&
+                  sortedRelatorio.length > RELATORIO_VISIBLE_ROWS && (
+                    <button
+                      type="button"
+                      className="units-relatorio__toggle"
+                      onClick={() => setShowAllRelatorio(false)}
+                    >
+                      Mostrar menos
+                    </button>
+                  )}
               </div>
             )}
           </section>

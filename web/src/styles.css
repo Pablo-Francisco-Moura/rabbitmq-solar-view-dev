@@ -293,6 +293,11 @@ body {
   margin-left: 12px;
 }
 
+.units-relatorio__toggle {
+  margin-top: 10px;
+  margin-right: 8px;
+}
+
 .app__header h1 {
   margin: 0 0 4px;
 }
