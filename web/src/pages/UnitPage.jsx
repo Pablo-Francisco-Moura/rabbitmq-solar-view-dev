@@ -315,6 +315,20 @@ export default function UnitPage() {
     selectUnidade(id, resultsById);
   }
 
+  function handleRemoveUnidade(id) {
+    const nextFoundIds = foundIds.filter((foundId) => foundId !== id);
+    const nextResultsById = { ...resultsById };
+    delete nextResultsById[id];
+
+    setFoundIds(nextFoundIds);
+    setResultsById(nextResultsById);
+    setSaveStatus(null);
+
+    if (id === selectedId) {
+      selectUnidade(nextFoundIds[0] ?? null, nextResultsById);
+    }
+  }
+
   async function handleSave(event) {
     event.preventDefault();
     if (selectedId == null || !resultsById[selectedId]) return;
@@ -380,19 +394,37 @@ export default function UnitPage() {
       {foundIds.length > 0 && (
         <div className="units-tabs">
           {foundIds.map((id) => (
-            <button
+            <div
               key={id}
-              type="button"
+              role="button"
+              tabIndex={0}
               className={`units-tabs__button${
                 id === selectedId ? " units-tabs__button--active" : ""
               }`}
               onClick={() => handleSelectUnidade(id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  handleSelectUnidade(id);
+                }
+              }}
             >
               <strong>{id}</strong>
               {resultsById[id]?.unidade?.uniNome && (
                 <span>{resultsById[id].unidade.uniNome}</span>
               )}
-            </button>
+              <button
+                type="button"
+                className="units-tabs__remove"
+                aria-label={`Remover unidade ${id}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleRemoveUnidade(id);
+                }}
+              >
+                ×
+              </button>
+            </div>
           ))}
         </div>
       )}
