@@ -763,27 +763,29 @@ export default function UnitPage() {
                   unidade. Nenhum outro campo é alterado.
                 </p>
 
-                <label>
-                  Código de instalação
-                  <input
-                    type="text"
-                    value={faturaCodigoInstalacao}
-                    onChange={(event) =>
-                      setFaturaCodigoInstalacao(event.target.value)
-                    }
-                  />
-                </label>
+                <div className="publish-form__row">
+                  <label>
+                    Código de instalação
+                    <input
+                      type="text"
+                      value={faturaCodigoInstalacao}
+                      onChange={(event) =>
+                        setFaturaCodigoInstalacao(event.target.value)
+                      }
+                    />
+                  </label>
 
-                <label>
-                  Novo código de instalação
-                  <input
-                    type="text"
-                    value={faturaNewCodigoInstalacao}
-                    onChange={(event) =>
-                      setFaturaNewCodigoInstalacao(event.target.value)
-                    }
-                  />
-                </label>
+                  <label>
+                    Novo código de instalação
+                    <input
+                      type="text"
+                      value={faturaNewCodigoInstalacao}
+                      onChange={(event) =>
+                        setFaturaNewCodigoInstalacao(event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
 
                 <div className="publish-form__actions">
                   <button type="submit" disabled={saving}>
