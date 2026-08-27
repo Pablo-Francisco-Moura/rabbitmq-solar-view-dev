@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getUnidadeDetails, updateUnidadeInstallationCodes } from "../api.js";
 import { parseUnidadeIds } from "../unidadeIds.js";
 
@@ -16,23 +16,132 @@ const SORTABLE_RELATORIO_COLUMNS = [
   "faturaMesReferencia",
   "faturaDataReferencia",
 ];
-const UNIDADE_FIELD_ORDER = [
+const UNIDADE_SUMMARY_FIELDS = [
   "unidadeId",
   "uniNome",
-  "uniAtiva",
-  "concessionaria_concessionariaId",
   "uniIntegradorResponsavel",
+  "concessionaria_concessionariaId",
   "faturaCodigoInstalacao",
   "faturaNewCodigoInstalacao",
+  "uniAtiva",
+  "uniExcluida",
 ];
+const CREDENCIAL_SUMMARY_FIELDS = [
+  "faturaCredencialId",
+  "unidade_unidadeId",
+  "usuario_usuarioId",
+  "concessionaria_concessionariaId",
+  "user",
+  "password",
+  "faturaCodigoInstalacao",
+  "faturaNewCodigoInstalacao",
+  "faturaCodigoContrato",
+  "faturaCodigoCliente",
+  "birthdate",
+  "email",
+  "cpf",
+  "email_integracao",
+  "credencialAtiva",
+  "flagExcluida",
+];
+const CONCESSIONARIA_SUMMARY_FIELDS = ["concessionariaId", "nomeConcessionaria"];
 
-function orderUnidadeFields(unidade) {
-  const keys = Object.keys(unidade);
-  const priority = UNIDADE_FIELD_ORDER.filter((key) => keys.includes(key));
-  const rest = keys.filter((key) => !UNIDADE_FIELD_ORDER.includes(key));
+function orderFields(object, priorityFields) {
+  const keys = Object.keys(object);
+  const priority = priorityFields.filter((key) => keys.includes(key));
+  const rest = keys.filter((key) => !priorityFields.includes(key));
   const ordered = {};
-  for (const key of [...priority, ...rest]) ordered[key] = unidade[key];
+  for (const key of [...priority, ...rest]) ordered[key] = object[key];
   return ordered;
+}
+
+function pickFields(object, fields) {
+  const picked = {};
+  for (const key of fields) {
+    if (key in object) picked[key] = object[key];
+  }
+  return picked;
+}
+
+function formatFieldValue(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+function CopyIcon() {
+  return (
+    <svg
+      viewBox="0 0 16 16"
+      width="13"
+      height="13"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      aria-hidden="true"
+    >
+      <rect x="5.5" y="5.5" width="8" height="8" rx="1.3" />
+      <path d="M3.5 10.5h-1a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v1" />
+    </svg>
+  );
+}
+
+function CopyableField({ label, value }) {
+  const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const hoverTimeoutRef = useRef(null);
+
+  function handleMouseEnter() {
+    hoverTimeoutRef.current = setTimeout(() => setTooltipVisible(true), 2000);
+  }
+
+  function handleMouseLeave() {
+    clearTimeout(hoverTimeoutRef.current);
+    setTooltipVisible(false);
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(formatFieldValue(value));
+      setCopied(true);
+      setTooltipVisible(false);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      // clipboard indisponivel (permissao negada, contexto nao seguro etc.)
+    }
+  }
+
+  return (
+    <div
+      className="json-field"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <button
+        type="button"
+        className="json-field__copy"
+        onClick={handleCopy}
+        aria-label={`Copiar ${label}`}
+      >
+        {copied ? "✓" : <CopyIcon />}
+      </button>
+      <span className="json-field__key">{label}:</span>
+      <span className="json-field__value">{formatFieldValue(value)}</span>
+      {tooltipVisible && !copied && (
+        <span className="json-field__tooltip">Copiar {label}</span>
+      )}
+    </div>
+  );
+}
+
+function JsonFieldList({ data }) {
+  return (
+    <div className="json-field-list">
+      {Object.entries(data).map(([key, value]) => (
+        <CopyableField key={key} label={key} value={value} />
+      ))}
+    </div>
+  );
 }
 
 function loadStoredState() {
@@ -112,6 +221,18 @@ export default function UnitPage() {
   const [relatorioSortColumn, setRelatorioSortColumn] = useState(
     "faturaMesReferencia",
   );
+  const [expandedSections, setExpandedSections] = useState({
+    unidade: false,
+    faturaCredencial: false,
+    concessionaria: false,
+  });
+
+  function toggleSection(name) {
+    setExpandedSections((current) => ({
+      ...current,
+      [name]: !current[name],
+    }));
+  }
 
   useEffect(() => {
     try {
@@ -144,6 +265,11 @@ export default function UnitPage() {
     setFaturaCodigoInstalacao(data?.unidade.faturaCodigoInstalacao ?? "");
     setFaturaNewCodigoInstalacao(data?.unidade.faturaNewCodigoInstalacao ?? "");
     setRelatorioSortColumn("faturaMesReferencia");
+    setExpandedSections({
+      unidade: false,
+      faturaCredencial: false,
+      concessionaria: false,
+    });
   }
 
   async function handleSearch(event) {
@@ -277,16 +403,85 @@ export default function UnitPage() {
         <>
           <div className="app__grid">
             <section className="units-details">
-              <h2>Unidade</h2>
-              <pre>
-                {JSON.stringify(orderUnidadeFields(details.unidade), null, 2)}
-              </pre>
+              <div
+                className="accordion-header"
+                onClick={() => toggleSection("unidade")}
+              >
+                <h2>Unidade</h2>
+                <span className="accordion-toggle">
+                  {expandedSections.unidade
+                    ? "Mostrar menos ▲"
+                    : "Mostrar mais ▼"}
+                </span>
+              </div>
+              <JsonFieldList
+                data={
+                  expandedSections.unidade
+                    ? orderFields(details.unidade, UNIDADE_SUMMARY_FIELDS)
+                    : pickFields(details.unidade, UNIDADE_SUMMARY_FIELDS)
+                }
+              />
 
-              <h2>Fatura Credencial</h2>
+              <div
+                className="accordion-header"
+                onClick={() => toggleSection("faturaCredencial")}
+              >
+                <h2>Fatura Credencial</h2>
+                {details.faturaCredencial && (
+                  <span className="accordion-toggle">
+                    {expandedSections.faturaCredencial
+                      ? "Mostrar menos ▲"
+                      : "Mostrar mais ▼"}
+                  </span>
+                )}
+              </div>
               {details.faturaCredencial ? (
-                <pre>{JSON.stringify(details.faturaCredencial, null, 2)}</pre>
+                <JsonFieldList
+                  data={
+                    expandedSections.faturaCredencial
+                      ? orderFields(
+                          details.faturaCredencial,
+                          CREDENCIAL_SUMMARY_FIELDS,
+                        )
+                      : pickFields(
+                          details.faturaCredencial,
+                          CREDENCIAL_SUMMARY_FIELDS,
+                        )
+                  }
+                />
               ) : (
                 <p>Nenhuma faturaCredencial encontrada para esta unidade.</p>
+              )}
+
+              <div
+                className="accordion-header"
+                onClick={() => toggleSection("concessionaria")}
+              >
+                <h2>Concessionária</h2>
+                {details.concessionaria && (
+                  <span className="accordion-toggle">
+                    {expandedSections.concessionaria
+                      ? "Mostrar menos ▲"
+                      : "Mostrar mais ▼"}
+                  </span>
+                )}
+              </div>
+              {details.concessionaria ? (
+                <JsonFieldList
+                  data={
+                    expandedSections.concessionaria
+                      ? orderFields(
+                          details.concessionaria,
+                          CONCESSIONARIA_SUMMARY_FIELDS,
+                        )
+                      : pickFields(
+                          details.concessionaria,
+                          CONCESSIONARIA_SUMMARY_FIELDS,
+                        )
+                  }
+                />
+              ) : (
+                <p>Nenhuma concessionária encontrada para esta unidade.</p>
               )}
             </section>
 
