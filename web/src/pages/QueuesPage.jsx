@@ -11,10 +11,21 @@ import {
 } from "../api.js";
 
 const POLL_INTERVAL_MS = 4000;
+const STORAGE_KEY = "rabbitmq-solar-view-dev:queues-page";
+
+function loadStoredConcessionariaId() {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
 
 export default function QueuesPage() {
   const [concessionarias, setConcessionarias] = useState([]);
-  const [concessionariaId, setConcessionariaId] = useState(null);
+  const [concessionariaId, setConcessionariaId] = useState(
+    () => loadStoredConcessionariaId(),
+  );
   const [queues, setQueues] = useState([]);
   const [queuesError, setQueuesError] = useState(null);
   const [selectedQueue, setSelectedQueue] = useState(null);
@@ -53,10 +64,23 @@ export default function QueuesPage() {
     getConcessionarias()
       .then((data) => {
         setConcessionarias(data);
-        setConcessionariaId((current) => current || data[0]?.id || null);
+        setConcessionariaId((current) => {
+          const stillExists = data.some(
+            (c) => String(c.id) === String(current),
+          );
+          return stillExists ? current : data[0]?.id || null;
+        });
       })
       .catch((error) => setQueuesError(error.message));
   }, []);
+
+  useEffect(() => {
+    try {
+      if (concessionariaId) localStorage.setItem(STORAGE_KEY, concessionariaId);
+    } catch {
+      // localStorage indisponivel (modo privado, storage cheio etc.)
+    }
+  }, [concessionariaId]);
 
   useEffect(() => {
     refreshQueues();
