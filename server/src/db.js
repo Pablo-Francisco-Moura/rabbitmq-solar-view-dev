@@ -114,10 +114,20 @@ export async function getUnidadeDetails(unidadeId) {
     [unidadeId],
   );
 
+  let concessionaria = null;
+  if (unidade.concessionaria_concessionariaId != null) {
+    const [concessionariaRows] = await db.query(
+      `SELECT * FROM concessionaria WHERE concessionariaId = ?`,
+      [unidade.concessionaria_concessionariaId],
+    );
+    concessionaria = concessionariaRows[0] || null;
+  }
+
   return {
     unidade,
     faturaCredencial: credencialRows[0] || null,
     faturaRelatorioEnergetico: relatorioRows,
+    concessionaria,
   };
 }
 
