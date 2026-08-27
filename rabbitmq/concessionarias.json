@@ -10,5 +10,11 @@
     "id": "24",
     "queueIn": "idc_equatorial_pa_in",
     "queueOut": "idc_equatorial_pa_out"
+  },
+  {
+    "nome": "ENERGISA",
+    "id": "27",
+    "queueIn": "idc_energisa_in",
+    "queueOut": "idc_energisa_out"
   }
 ]
