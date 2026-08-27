@@ -256,7 +256,7 @@ function getUnidadeStatus(relatorio) {
   };
 }
 
-const NBSP = " ";
+const NBSP = " ";
 
 // Espaco comum some quando o usuario seleciona e copia manualmente (o
 // destino colapsa/ignora espacos multiplos). Espaco nao-quebravel (nbsp)
