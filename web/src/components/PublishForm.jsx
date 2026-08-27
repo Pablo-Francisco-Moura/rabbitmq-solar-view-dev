@@ -26,6 +26,7 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
   const [submitting, setSubmitting] = useState(false);
   const [submitDone, setSubmitDone] = useState(0);
   const [submitTotal, setSubmitTotal] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   const unidadeIds = useMemo(
     () => parseUnidadeIds(unidadeIdsText),
@@ -146,6 +147,19 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
     }
   }
 
+  async function handleCopyPayload() {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setStatus({
+        ok: false,
+        message: "Não foi possível copiar para a área de transferência.",
+      });
+    }
+  }
+
   const fetchLabel =
     unidadeIds.length > 1
       ? `Buscar ${unidadeIds.length} unidades`
@@ -221,6 +235,9 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
       <div className="publish-form__actions">
         <button type="submit" disabled={submitting}>
           {submitLabel}
+        </button>
+        <button type="button" onClick={handleCopyPayload} disabled={!text}>
+          {copied ? "Copiado!" : "Copiar"}
         </button>
         {status && (
           <span
