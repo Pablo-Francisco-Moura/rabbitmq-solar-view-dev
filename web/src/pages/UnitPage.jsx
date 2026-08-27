@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { getUnidadeDetails, updateUnidadeInstallationCodes } from "../api.js";
+import {
+  getUnidadeDetails,
+  updateUnidadeInstallationCodes,
+  extractFatura,
+} from "../api.js";
 import { parseUnidadeIds } from "../unidadeIds.js";
 
 const STORAGE_KEY = "rabbitmq-solar-view-dev:unit-page";
@@ -163,6 +167,10 @@ function orderRelatorioColumns(sampleRow) {
   return [...priority, ...rest];
 }
 
+function relatorioColumnLabel(column) {
+  return column === "faturaUrlArquivoRaw" ? "faturaUrlArquivo" : column;
+}
+
 function getLastNMonths(n) {
   const months = [];
   const now = new Date();
@@ -228,6 +236,10 @@ export default function UnitPage() {
     concessionaria: false,
   });
   const [showAllRelatorio, setShowAllRelatorio] = useState(false);
+  const [pdfModalUrl, setPdfModalUrl] = useState(null);
+  const [extracting, setExtracting] = useState(null);
+  const [extractResult, setExtractResult] = useState(null);
+  const [extractError, setExtractError] = useState(null);
 
   function toggleSection(name) {
     setExpandedSections((current) => ({
@@ -235,6 +247,45 @@ export default function UnitPage() {
       [name]: !current[name],
     }));
   }
+
+  function openPdfModal(url) {
+    setPdfModalUrl(url);
+    setExtracting(null);
+    setExtractResult(null);
+    setExtractError(null);
+  }
+
+  function closePdfModal() {
+    setPdfModalUrl(null);
+    setExtracting(null);
+    setExtractResult(null);
+    setExtractError(null);
+  }
+
+  async function handleExtract(env) {
+    const companyId = details?.unidade?.concessionaria_concessionariaId;
+    if (!pdfModalUrl || !Number.isInteger(companyId)) return;
+    setExtracting(env);
+    setExtractError(null);
+    try {
+      const result = await extractFatura(env, companyId, pdfModalUrl);
+      setExtractResult(result);
+    } catch (err) {
+      setExtractError(err.message);
+      setExtractResult(null);
+    } finally {
+      setExtracting(null);
+    }
+  }
+
+  useEffect(() => {
+    if (!pdfModalUrl) return;
+    function handleKeyDown(event) {
+      if (event.key === "Escape") closePdfModal();
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [pdfModalUrl]);
 
   useEffect(() => {
     try {
@@ -361,7 +412,10 @@ export default function UnitPage() {
   const details = selectedId != null ? resultsById[selectedId] : null;
   const relatorio = details?.faturaRelatorioEnergetico ?? [];
   const relatorioColumns = relatorio.length
-    ? orderRelatorioColumns(relatorio[0])
+    ? [
+        ...orderRelatorioColumns(relatorio[0]),
+        ...("faturaUrlArquivo" in relatorio[0] ? ["faturaUrlArquivoRaw"] : []),
+      ]
     : [];
   const sortedRelatorio = [...relatorio].sort((a, b) => {
     const valueA = a[relatorioSortColumn] ?? "";
@@ -609,7 +663,7 @@ export default function UnitPage() {
                                 : undefined
                             }
                           >
-                            {column}
+                            {relatorioColumnLabel(column)}
                             {active ? " ▼" : ""}
                           </th>
                         );
@@ -619,9 +673,31 @@ export default function UnitPage() {
                   <tbody>
                     {visibleRelatorio.map((row, index) => (
                       <tr key={row.faturaId ?? index}>
-                        {relatorioColumns.map((column) => (
-                          <td key={column}>{String(row[column] ?? "")}</td>
-                        ))}
+                        {relatorioColumns.map((column) => {
+                          if (column === "faturaUrlArquivoRaw") {
+                            return (
+                              <td key={column}>
+                                {String(row.faturaUrlArquivo ?? "")}
+                              </td>
+                            );
+                          }
+                          const value = row[column];
+                          if (column === "faturaUrlArquivo" && value) {
+                            return (
+                              <td key={column}>
+                                <button
+                                  type="button"
+                                  className="units-relatorio__pdf-link"
+                                  title={value}
+                                  onClick={() => openPdfModal(value)}
+                                >
+                                  Ver PDF
+                                </button>
+                              </td>
+                            );
+                          }
+                          return <td key={column}>{String(value ?? "")}</td>;
+                        })}
                       </tr>
                     ))}
                   </tbody>
@@ -649,6 +725,64 @@ export default function UnitPage() {
             )}
           </section>
         </>
+      )}
+
+      {pdfModalUrl && (
+        <div className="pdf-modal-overlay" onClick={closePdfModal}>
+          <div
+            className="pdf-modal"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="pdf-modal__header">
+              <h3>Fatura (PDF)</h3>
+              <button
+                type="button"
+                className="pdf-modal__close"
+                aria-label="Fechar"
+                onClick={closePdfModal}
+              >
+                ×
+              </button>
+            </div>
+            <div className="pdf-modal__body">
+              <iframe
+                src={`${pdfModalUrl}#zoom=125`}
+                title="Fatura PDF"
+                className="pdf-modal__frame"
+              />
+              <div className="pdf-modal__sidebar">
+                <div className="pdf-modal__extract-actions">
+                  <button
+                    type="button"
+                    disabled={extracting != null}
+                    onClick={() => handleExtract("prod")}
+                  >
+                    {extracting === "prod" ? "Extraindo…" : "Extrair Prod"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={extracting != null}
+                    onClick={() => handleExtract("local")}
+                  >
+                    {extracting === "local" ? "Extraindo…" : "Extrair Local"}
+                  </button>
+                </div>
+                <div className="pdf-modal__extract-result">
+                  {extractError && <p className="app__error">{extractError}</p>}
+                  {extractResult && (
+                    <pre>{JSON.stringify(extractResult, null, 2)}</pre>
+                  )}
+                  {!extractError && !extractResult && (
+                    <p className="pdf-modal__extract-placeholder">
+                      Clique em "Extrair Prod" ou "Extrair Local" para rodar a
+                      extração desta fatura.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
