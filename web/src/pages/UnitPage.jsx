@@ -201,6 +201,127 @@ function getMissingMonths(relatorio) {
     .reverse();
 }
 
+// Ultima linha do relatorio com faturaDataLeituraAtual preenchida (mes mais
+// recente presente) - usada pra estimar quando a proxima fatura deve sair.
+function getLastReadingDate(relatorio) {
+  let latestMonth = "";
+  let latestReading = null;
+  for (const row of relatorio) {
+    if (!row.faturaDataLeituraAtual) continue;
+    const month = row.faturaMesReferencia
+      ? String(row.faturaMesReferencia).slice(0, 7)
+      : row.faturaDataReferencia
+        ? String(row.faturaDataReferencia).slice(0, 7)
+        : "";
+    if (month && month > latestMonth) {
+      latestMonth = month;
+      latestReading = row.faturaDataLeituraAtual;
+    }
+  }
+  return latestReading ? new Date(latestReading) : null;
+}
+
+function addDays(date, days) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function formatDateBR(date) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
+function getUnidadeStatus(relatorio) {
+  const missing = getMissingMonths(relatorio);
+  if (missing.length === 0) return { label: "OK", tone: "ok" };
+  const currentMonth = getLastNMonths(1)[0];
+  const onlyCurrentMonthMissing =
+    missing.length === 1 && missing[0] === currentMonth;
+  if (onlyCurrentMonthMissing) {
+    const monthLabel = formatMonthLabel(missing[0]);
+    const lastReading = getLastReadingDate(relatorio);
+    if (!lastReading) return { label: monthLabel, tone: "neutral" };
+    const expectedAvailableFrom = addDays(lastReading, 31);
+    const overdue = new Date() >= expectedAvailableFrom;
+    return {
+      label: `${monthLabel} última leitura: ${formatDateBR(lastReading)}`,
+      tone: overdue ? "warning" : "neutral",
+    };
+  }
+  return {
+    label: missing.map(formatMonthLabel).join(" - "),
+    tone: "error",
+  };
+}
+
+const NBSP = " ";
+
+// Espaco comum some quando o usuario seleciona e copia manualmente (o
+// destino colapsa/ignora espacos multiplos). Espaco nao-quebravel (nbsp)
+// nao e' colapsado e nao aciona o modo "tabela" do Word como <table> aciona.
+function padStartNbsp(value, width) {
+  return NBSP.repeat(Math.max(0, width - value.length)) + value;
+}
+
+function padEndNbsp(value, width) {
+  return value + NBSP.repeat(Math.max(0, width - value.length));
+}
+
+function buildSummaryLine(row, idWidth, nomeWidth, aneelWidth) {
+  return `un: ${String(row.id).padStart(idWidth)} nome: ${row.nome.padEnd(
+    nomeWidth,
+  )} aneel: ${row.aneel.padEnd(aneelWidth)} - ${row.status.label}`;
+}
+
+function buildSummaryPlainText(rows, idWidth, nomeWidth, aneelWidth) {
+  return rows
+    .map((row) => buildSummaryLine(row, idWidth, nomeWidth, aneelWidth))
+    .join("\n");
+}
+
+// Cores para o clipboard (Word, Gmail etc. colam em fundo branco) - nao usar
+// as cores do tema escuro da tela aqui, ficam ilegiveis em fundo claro.
+const SUMMARY_STATUS_COLORS = {
+  ok: "#1e7e34",
+  error: "#c0392b",
+  warning: "#b8860b",
+  neutral: "#1a1a1a",
+};
+const SUMMARY_LABEL_COLOR = "#666666";
+const SUMMARY_VALUE_COLOR = "#1a1a1a";
+
+function escapeHtml(value) {
+  return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// <table> faz o Word converter para um objeto Table e aplicar o estilo de
+// tabela padrao dele (ignorando a cor de cada celula). Por isso usamos
+// spans soltos, com nbsp para o alinhamento sobreviver a colagem manual.
+function summaryHtmlSpan(text, color) {
+  return `<span style="color:${color};font-family:Consolas,'Courier New',monospace;font-size:13px"><font color="${color}">${escapeHtml(text)}</font></span>`;
+}
+
+function buildSummaryHtml(rows, idWidth, nomeWidth, aneelWidth) {
+  const lines = rows.map((row) => {
+    const statusColor = SUMMARY_STATUS_COLORS[row.status.tone] || SUMMARY_VALUE_COLOR;
+    return (
+      `<div>` +
+      summaryHtmlSpan(`un:${NBSP}`, SUMMARY_LABEL_COLOR) +
+      summaryHtmlSpan(padStartNbsp(String(row.id), idWidth), SUMMARY_VALUE_COLOR) +
+      summaryHtmlSpan(`${NBSP}nome:${NBSP}`, SUMMARY_LABEL_COLOR) +
+      summaryHtmlSpan(padEndNbsp(row.nome, nomeWidth), SUMMARY_VALUE_COLOR) +
+      summaryHtmlSpan(`${NBSP}aneel:${NBSP}`, SUMMARY_LABEL_COLOR) +
+      summaryHtmlSpan(padEndNbsp(row.aneel, aneelWidth), SUMMARY_VALUE_COLOR) +
+      summaryHtmlSpan(`${NBSP}-${NBSP}`, SUMMARY_LABEL_COLOR) +
+      summaryHtmlSpan(row.status.label, statusColor) +
+      `</div>`
+    );
+  });
+  return `<div style="white-space:pre;">${lines.join("")}</div>`;
+}
+
 export default function UnitPage() {
   const [searchText, setSearchText] = useState(
     () => loadStoredState()?.searchText ?? "",
@@ -240,6 +361,7 @@ export default function UnitPage() {
   const [extracting, setExtracting] = useState(null);
   const [extractResult, setExtractResult] = useState(null);
   const [extractError, setExtractError] = useState(null);
+  const [summaryCopied, setSummaryCopied] = useState(false);
 
   function toggleSection(name) {
     setExpandedSections((current) => ({
@@ -275,6 +397,37 @@ export default function UnitPage() {
       setExtractResult(null);
     } finally {
       setExtracting(null);
+    }
+  }
+
+  async function handleCopySummary() {
+    const text = buildSummaryPlainText(
+      unidadeSummaryRows,
+      summaryIdWidth,
+      summaryNomeWidth,
+      summaryAneelWidth,
+    );
+    const html = buildSummaryHtml(
+      unidadeSummaryRows,
+      summaryIdWidth,
+      summaryNomeWidth,
+      summaryAneelWidth,
+    );
+    try {
+      if (navigator.clipboard?.write && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            "text/plain": new Blob([text], { type: "text/plain" }),
+            "text/html": new Blob([html], { type: "text/html" }),
+          }),
+        ]);
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+      setSummaryCopied(true);
+      setTimeout(() => setSummaryCopied(false), 1500);
+    } catch {
+      // clipboard indisponivel (permissao negada, contexto nao seguro etc.)
     }
   }
 
@@ -428,6 +581,28 @@ export default function UnitPage() {
   const hiddenRelatorioCount = sortedRelatorio.length - visibleRelatorio.length;
   const missingMonths = getMissingMonths(relatorio);
 
+  const unidadeSummaryRows = foundIds.map((id) => ({
+    id,
+    nome: resultsById[id]?.unidade?.uniNome ?? "",
+    aneel:
+      resultsById[id]?.concessionaria?.sig_agente ||
+      resultsById[id]?.concessionaria?.nomeGrupo ||
+      "",
+    status: getUnidadeStatus(resultsById[id]?.faturaRelatorioEnergetico ?? []),
+  }));
+  const summaryIdWidth = Math.max(
+    0,
+    ...unidadeSummaryRows.map((row) => String(row.id).length),
+  );
+  const summaryNomeWidth = Math.max(
+    0,
+    ...unidadeSummaryRows.map((row) => row.nome.length),
+  );
+  const summaryAneelWidth = Math.max(
+    0,
+    ...unidadeSummaryRows.map((row) => row.aneel.length),
+  );
+
   return (
     <div>
       <header className="app__header">
@@ -578,54 +753,95 @@ export default function UnitPage() {
               )}
             </section>
 
-            <form className="publish-form" onSubmit={handleSave}>
-              <h2>Atualizar códigos de instalação</h2>
-              <p>
-                Atualiza <code>faturaCodigoInstalacao</code> e{" "}
-                <code>faturaNewCodigoInstalacao</code> nas tabelas{" "}
-                <code>unidade</code> e <code>faturaCredencial</code> desta
-                unidade. Nenhum outro campo é alterado.
-              </p>
+            <div className="app__grid-col">
+              <form className="publish-form" onSubmit={handleSave}>
+                <h2>Atualizar códigos de instalação</h2>
+                <p>
+                  Atualiza <code>faturaCodigoInstalacao</code> e{" "}
+                  <code>faturaNewCodigoInstalacao</code> nas tabelas{" "}
+                  <code>unidade</code> e <code>faturaCredencial</code> desta
+                  unidade. Nenhum outro campo é alterado.
+                </p>
 
-              <label>
-                Código de instalação
-                <input
-                  type="text"
-                  value={faturaCodigoInstalacao}
-                  onChange={(event) =>
-                    setFaturaCodigoInstalacao(event.target.value)
-                  }
-                />
-              </label>
-
-              <label>
-                Novo código de instalação
-                <input
-                  type="text"
-                  value={faturaNewCodigoInstalacao}
-                  onChange={(event) =>
-                    setFaturaNewCodigoInstalacao(event.target.value)
-                  }
-                />
-              </label>
-
-              <div className="publish-form__actions">
-                <button type="submit" disabled={saving}>
-                  {saving ? "Salvando…" : "Salvar"}
-                </button>
-                {saveStatus && (
-                  <span
-                    className={
-                      saveStatus.ok
-                        ? "status status--ok"
-                        : "status status--error"
+                <label>
+                  Código de instalação
+                  <input
+                    type="text"
+                    value={faturaCodigoInstalacao}
+                    onChange={(event) =>
+                      setFaturaCodigoInstalacao(event.target.value)
                     }
-                  >
-                    {saveStatus.message}
-                  </span>
-                )}
-              </div>
-            </form>
+                  />
+                </label>
+
+                <label>
+                  Novo código de instalação
+                  <input
+                    type="text"
+                    value={faturaNewCodigoInstalacao}
+                    onChange={(event) =>
+                      setFaturaNewCodigoInstalacao(event.target.value)
+                    }
+                  />
+                </label>
+
+                <div className="publish-form__actions">
+                  <button type="submit" disabled={saving}>
+                    {saving ? "Salvando…" : "Salvar"}
+                  </button>
+                  {saveStatus && (
+                    <span
+                      className={
+                        saveStatus.ok
+                          ? "status status--ok"
+                          : "status status--error"
+                      }
+                    >
+                      {saveStatus.message}
+                    </span>
+                  )}
+                </div>
+              </form>
+
+              {unidadeSummaryRows.length > 0 && (
+                <section className="units-details units-summary">
+                  <div className="units-summary__header">
+                    <h2>Faturas ausentes</h2>
+                    <button type="button" onClick={handleCopySummary}>
+                      {summaryCopied ? "Copiado!" : "Copiar"}
+                    </button>
+                  </div>
+                  <div className="units-summary__list">
+                    {unidadeSummaryRows.map((row) => (
+                      <div className="units-summary__row" key={row.id}>
+                        <span className="units-summary__label">un:{NBSP}</span>
+                        <span className="units-summary__value">
+                          {padStartNbsp(String(row.id), summaryIdWidth)}
+                        </span>
+                        <span className="units-summary__label">
+                          {NBSP}nome:{NBSP}
+                        </span>
+                        <span className="units-summary__value">
+                          {padEndNbsp(row.nome, summaryNomeWidth)}
+                        </span>
+                        <span className="units-summary__label">
+                          {NBSP}aneel:{NBSP}
+                        </span>
+                        <span className="units-summary__value">
+                          {padEndNbsp(row.aneel, summaryAneelWidth)}
+                        </span>
+                        <span className="units-summary__label">{NBSP}-{NBSP}</span>
+                        <span
+                          className={`units-summary__value units-summary__value--${row.status.tone}`}
+                        >
+                          {row.status.label}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
 
           <section className="units-details units-relatorio">
