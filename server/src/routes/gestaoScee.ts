@@ -12,7 +12,7 @@ router.get("/api/gestao-scee", async (request, response) => {
     const vinculos = await getGestaoSceeByUnidadeIds(ids);
     response.json(vinculos);
   } catch (error) {
-    response.status(502).json({ error: error.message });
+    response.status(502).json({ error: (error as Error).message });
   }
 });
 

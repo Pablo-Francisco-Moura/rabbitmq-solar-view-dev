@@ -6,6 +6,7 @@ import {
   updateUnidadeInstallationCodes,
   searchUnidadesByNome,
 } from "../db/unidades.js";
+import type { InstallationCodesRequestBody } from "../types/unidades.js";
 
 const router = Router();
 
@@ -18,7 +19,7 @@ router.get("/api/unidades/nomes", async (request, response) => {
     const nomes = await getUnidadeNomes(ids);
     response.json(nomes);
   } catch (error) {
-    response.status(502).json({ error: error.message });
+    response.status(502).json({ error: (error as Error).message });
   }
 });
 
@@ -29,7 +30,7 @@ router.get("/api/unidades/busca", async (request, response) => {
     const unidades = await searchUnidadesByNome(nome);
     response.json(unidades);
   } catch (error) {
-    response.status(502).json({ error: error.message });
+    response.status(502).json({ error: (error as Error).message });
   }
 });
 
@@ -41,8 +42,9 @@ router.get("/api/unidades/:unidadeId", async (request, response) => {
     const details = await getUnidadeDetails(unidadeId);
     response.json(details);
   } catch (error) {
-    const notFound = /nao encontrad/.test(error.message);
-    response.status(notFound ? 404 : 502).json({ error: error.message });
+    const message = (error as Error).message;
+    const notFound = /nao encontrad/.test(message);
+    response.status(notFound ? 404 : 502).json({ error: message });
   }
 });
 
@@ -53,7 +55,7 @@ router.patch(
     if (!Number.isInteger(unidadeId) || unidadeId <= 0)
       return response.status(400).json({ error: "unidadeId invalido." });
     const { faturaCodigoInstalacao, faturaNewCodigoInstalacao } =
-      request.body || {};
+      (request.body || {}) as InstallationCodesRequestBody;
     if (
       (faturaCodigoInstalacao != null &&
         typeof faturaCodigoInstalacao !== "string") ||
@@ -70,8 +72,9 @@ router.patch(
       });
       response.json(details);
     } catch (error) {
-      const notFound = /nao encontrad/.test(error.message);
-      response.status(notFound ? 404 : 502).json({ error: error.message });
+      const message = (error as Error).message;
+      const notFound = /nao encontrad/.test(message);
+      response.status(notFound ? 404 : 502).json({ error: message });
     }
   },
 );
@@ -84,8 +87,9 @@ router.get("/api/unidades/:unidadeId/job-payload", async (request, response) => 
     const payload = await getUnidadeJobPayload(unidadeId);
     response.json(payload);
   } catch (error) {
-    const notFound = /nao encontrad/.test(error.message);
-    response.status(notFound ? 404 : 502).json({ error: error.message });
+    const message = (error as Error).message;
+    const notFound = /nao encontrad/.test(message);
+    response.status(notFound ? 404 : 502).json({ error: message });
   }
 });
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
+import type { ExtractEnv, ExtractRequestBody } from "../types/extract.js";
 
-const extractApiUrls = {
+const extractApiUrls: Record<ExtractEnv, string> = {
   local: process.env.EXTRACT_API_URL_LOCAL || "http://localhost:4001",
   prod: process.env.EXTRACT_API_URL_PROD || "http://idc.solarview.com.br:4001",
 };
@@ -8,8 +9,8 @@ const extractApiUrls = {
 const router = Router();
 
 router.post("/api/extract", async (request, response) => {
-  const { env, url, companyId } = request.body || {};
-  const baseUrl = extractApiUrls[env];
+  const { env, url, companyId } = (request.body || {}) as ExtractRequestBody;
+  const baseUrl = env && extractApiUrls[env];
   if (!baseUrl)
     return response
       .status(400)
@@ -26,7 +27,7 @@ router.post("/api/extract", async (request, response) => {
       body: JSON.stringify({ url, companyId: companyIdNumber }),
     });
     const text = await extractResponse.text();
-    let data;
+    let data: unknown;
     try {
       data = JSON.parse(text);
     } catch {
@@ -34,11 +35,12 @@ router.post("/api/extract", async (request, response) => {
     }
     response.status(extractResponse.status).json(data);
   } catch (error) {
-    const detail = error.cause?.code || error.cause?.message;
+    const cause = (error as { cause?: { code?: string; message?: string } }).cause;
+    const detail = cause?.code || cause?.message;
     response.status(502).json({
       error: detail
         ? `Falha ao conectar em ${baseUrl}/extract: ${detail}`
-        : error.message,
+        : (error as Error).message,
     });
   }
 });

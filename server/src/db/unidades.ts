@@ -1,13 +1,29 @@
+import type { ResultSetHeader } from "mysql2/promise";
 import { getPool } from "./pool.js";
+import type {
+  UnidadeJobPayloadRow,
+  IntegradorIdRow,
+  UnidadeNomeRow,
+  UnidadeRow,
+  FaturaCredencialRow,
+  FaturaRelatorioEnergeticoRow,
+  ConcessionariaRow,
+  UsuarioRow,
+  UnidadeJobPayload,
+  UnidadeDetails,
+  InstallationCodesUpdate,
+} from "../types/unidades.js";
 
 // Espelha o job publicado hoje manualmente nas filas idc_*: dado o unidadeId,
 // busca fatura credencial + unidade e resolve o integradorId via
 // integrador.usuario_usuarioId = unidade.uniIntegradorResponsavel (esse ultimo
 // e' um usuarioId, nao um integradorId).
-export async function getUnidadeJobPayload(unidadeId) {
+export async function getUnidadeJobPayload(
+  unidadeId: number,
+): Promise<UnidadeJobPayload> {
   const db = getPool();
 
-  const [unidadeRows] = await db.query(
+  const [unidadeRows] = await db.query<UnidadeJobPayloadRow[]>(
     `SELECT unidadeId, uniIntegradorResponsavel, proprietario_usuarioId,
             concessionaria_concessionariaId, uniConcessionaria, grupo_tarifario
      FROM unidade
@@ -17,7 +33,7 @@ export async function getUnidadeJobPayload(unidadeId) {
   const unidade = unidadeRows[0];
   if (!unidade) throw new Error(`Unidade ${unidadeId} nao encontrada.`);
 
-  const [credencialRows] = await db.query(
+  const [credencialRows] = await db.query<FaturaCredencialRow[]>(
     `SELECT * FROM faturaCredencial
      WHERE unidade_unidadeId = ?
      ORDER BY faturaCredencialId DESC
@@ -30,7 +46,7 @@ export async function getUnidadeJobPayload(unidadeId) {
       `Nenhuma faturaCredencial encontrada para a unidade ${unidadeId}.`,
     );
 
-  const [integradorRows] = await db.query(
+  const [integradorRows] = await db.query<IntegradorIdRow[]>(
     `SELECT integradorId FROM integrador WHERE usuario_usuarioId = ?`,
     [unidade.uniIntegradorResponsavel],
   );
@@ -68,17 +84,19 @@ export async function getUnidadeJobPayload(unidadeId) {
   };
 }
 
-export async function getUnidadeDetails(unidadeId) {
+export async function getUnidadeDetails(
+  unidadeId: number,
+): Promise<UnidadeDetails> {
   const db = getPool();
 
-  const [unidadeRows] = await db.query(
+  const [unidadeRows] = await db.query<UnidadeRow[]>(
     `SELECT * FROM unidade WHERE unidadeId = ?`,
     [unidadeId],
   );
   const unidade = unidadeRows[0];
   if (!unidade) throw new Error(`Unidade ${unidadeId} nao encontrada.`);
 
-  const [credencialRows] = await db.query(
+  const [credencialRows] = await db.query<FaturaCredencialRow[]>(
     `SELECT * FROM faturaCredencial
      WHERE unidade_unidadeId = ?
      ORDER BY faturaCredencialId DESC
@@ -86,16 +104,16 @@ export async function getUnidadeDetails(unidadeId) {
     [unidadeId],
   );
 
-  const [relatorioRows] = await db.query(
+  const [relatorioRows] = await db.query<FaturaRelatorioEnergeticoRow[]>(
     `SELECT * FROM faturaRelatorioEnergetico fre
      WHERE fre.unidade_unidadeId = ?
      ORDER BY fre.faturaMesReferencia DESC`,
     [unidadeId],
   );
 
-  let concessionaria = null;
+  let concessionaria: ConcessionariaRow | null = null;
   if (unidade.concessionaria_concessionariaId != null) {
-    const [concessionariaRows] = await db.query(
+    const [concessionariaRows] = await db.query<ConcessionariaRow[]>(
       `SELECT * FROM concessionaria WHERE concessionariaId = ?`,
       [unidade.concessionaria_concessionariaId],
     );
@@ -105,9 +123,9 @@ export async function getUnidadeDetails(unidadeId) {
   // unidade.uniIntegradorResponsavel guarda um usuarioId (nao um integradorId
   // - ver getUnidadeJobPayload acima), entao o integrador e' o usuario dono
   // desse id.
-  let integrador = null;
+  let integrador: UsuarioRow | null = null;
   if (unidade.uniIntegradorResponsavel != null) {
-    const [integradorRows] = await db.query(
+    const [integradorRows] = await db.query<UsuarioRow[]>(
       `SELECT * FROM usuario WHERE usuarioId = ?`,
       [unidade.uniIntegradorResponsavel],
     );
@@ -126,12 +144,12 @@ export async function getUnidadeDetails(unidadeId) {
 // Unico update permitido por essa tela: codigo de instalacao e novo codigo de
 // instalacao, replicado em unidade e faturaCredencial para a mesma unidade.
 export async function updateUnidadeInstallationCodes(
-  unidadeId,
-  { faturaCodigoInstalacao, faturaNewCodigoInstalacao },
-) {
+  unidadeId: number,
+  { faturaCodigoInstalacao, faturaNewCodigoInstalacao }: InstallationCodesUpdate,
+): Promise<UnidadeDetails> {
   const db = getPool();
 
-  const [unidadeResult] = await db.query(
+  const [unidadeResult] = await db.query<ResultSetHeader>(
     `UPDATE unidade SET faturaCodigoInstalacao = ?, faturaNewCodigoInstalacao = ? WHERE unidadeId = ?`,
     [faturaCodigoInstalacao, faturaNewCodigoInstalacao, unidadeId],
   );
@@ -147,23 +165,27 @@ export async function updateUnidadeInstallationCodes(
 }
 
 // Usado so para exibicao (titulo da mensagem na UI) — nunca entra no payload do job.
-export async function getUnidadeNomes(unidadeIds) {
+export async function getUnidadeNomes(
+  unidadeIds: number[],
+): Promise<Record<number, string>> {
   if (!unidadeIds.length) return {};
   const db = getPool();
-  const [rows] = await db.query(
+  const [rows] = await db.query<UnidadeNomeRow[]>(
     `SELECT unidadeId, uniNome FROM unidade WHERE unidadeId IN (?)`,
     [unidadeIds],
   );
-  const nomes = {};
+  const nomes: Record<number, string> = {};
   for (const row of rows) nomes[row.unidadeId] = row.uniNome;
   return nomes;
 }
 
 // Busca por nome (LIKE parcial), acionada na UI quando o usuario digita o nome
 // entre aspas duplas em vez de um unidadeId.
-export async function searchUnidadesByNome(nome) {
+export async function searchUnidadesByNome(
+  nome: string,
+): Promise<UnidadeNomeRow[]> {
   const db = getPool();
-  const [rows] = await db.query(
+  const [rows] = await db.query<UnidadeNomeRow[]>(
     `SELECT unidadeId, uniNome FROM unidade WHERE uniNome LIKE ? ORDER BY uniNome LIMIT 200`,
     [`%${nome}%`],
   );

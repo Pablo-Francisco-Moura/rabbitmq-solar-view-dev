@@ -1,8 +1,9 @@
 import mysql from "mysql2/promise";
+import type { Pool } from "mysql2/promise";
 
-let pool;
+let pool: Pool | undefined;
 
-export function getPool() {
+export function getPool(): Pool {
   if (!pool) {
     pool = mysql.createPool({
       host: process.env.IDC_MYSQL_HOST_PROD || process.env.IDC_MYSQL_HOST,

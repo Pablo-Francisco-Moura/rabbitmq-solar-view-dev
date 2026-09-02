@@ -7,6 +7,14 @@ import {
   drainQueue,
   refillQueue,
 } from "../rabbitmq.js";
+import type {
+  QueueDetail,
+  RabbitManagementQueue,
+  RabbitManagementMessage,
+  QueueMessage,
+  PublishMessageBody,
+  DeleteMessageBody,
+} from "../types/queues.js";
 
 const router = Router();
 
@@ -15,17 +23,19 @@ router.get("/api/health", async (_request, response) => {
     await getChannel();
     response.json({ ok: true, queues });
   } catch (error) {
-    response.status(503).json({ ok: false, error: error.message });
+    response.status(503).json({ ok: false, error: (error as Error).message });
   }
 });
 
 router.get("/api/queues", async (_request, response) => {
   try {
     const activeChannel = await getChannel();
-    const details = await Promise.all(
+    const details: QueueDetail[] = await Promise.all(
       queues.map(async (queue) => {
         const [data, brokerData] = await Promise.all([
-          rabbitRequest(`/api/queues/%2F/${encodeURIComponent(queue)}`),
+          rabbitRequest<RabbitManagementQueue>(
+            `/api/queues/%2F/${encodeURIComponent(queue)}`,
+          ),
           activeChannel.checkQueue(queue),
         ]);
         const messagesReady = brokerData.messageCount ?? data.messages_ready ?? 0;
@@ -40,7 +50,7 @@ router.get("/api/queues", async (_request, response) => {
     );
     response.json(details);
   } catch (error) {
-    response.status(502).json({ error: error.message });
+    response.status(502).json({ error: (error as Error).message });
   }
 });
 
@@ -49,7 +59,7 @@ router.get("/api/queues/:queue/messages", async (request, response) => {
   if (!queues.includes(queue))
     return response.status(404).json({ error: "Fila nao configurada." });
   try {
-    const messages = await rabbitRequest(
+    const messages = await rabbitRequest<RabbitManagementMessage[]>(
       `/api/queues/%2F/${encodeURIComponent(queue)}/get`,
       {
         method: "POST",
@@ -61,24 +71,23 @@ router.get("/api/queues/:queue/messages", async (request, response) => {
         }),
       },
     );
-    response.json(
-      messages.map((item, index) => ({
-        id: `${queue}-${index}-${item.properties?.message_id || ""}`,
-        payload: item.payload,
-        payloadBytes: item.payload_bytes,
-        properties: item.properties,
-        routingKey: item.routing_key,
-        redelivered: item.redelivered,
-      })),
-    );
+    const result: QueueMessage[] = messages.map((item, index) => ({
+      id: `${queue}-${index}-${item.properties?.message_id || ""}`,
+      payload: item.payload,
+      payloadBytes: item.payload_bytes,
+      properties: item.properties,
+      routingKey: item.routing_key,
+      redelivered: item.redelivered,
+    }));
+    response.json(result);
   } catch (error) {
-    response.status(502).json({ error: error.message });
+    response.status(502).json({ error: (error as Error).message });
   }
 });
 
 router.delete("/api/queues/:queue/messages/:index", async (request, response) => {
   const { queue, index } = request.params;
-  const { payload } = request.body || {};
+  const { payload } = (request.body || {}) as DeleteMessageBody;
   if (!queues.includes(queue))
     return response.status(404).json({ error: "Fila nao configurada." });
   const targetIndex = Number(index);
@@ -104,13 +113,13 @@ router.delete("/api/queues/:queue/messages/:index", async (request, response) =>
     response.json({ ok: true });
   } catch (error) {
     resetChannel();
-    response.status(503).json({ error: error.message });
+    response.status(503).json({ error: (error as Error).message });
   }
 });
 
 router.post("/api/messages", async (request, response) => {
-  const { queue, payload, priority = 0 } = request.body || {};
-  if (!queues.includes(queue))
+  const { queue, payload, priority = 0 } = (request.body || {}) as PublishMessageBody;
+  if (!queue || !queues.includes(queue))
     return response.status(400).json({ error: "Fila nao configurada." });
   if (!payload || typeof payload !== "object" || Array.isArray(payload))
     return response
@@ -128,7 +137,7 @@ router.post("/api/messages", async (request, response) => {
     response.status(201).json({ ok: true, queue, priority: safePriority });
   } catch (error) {
     resetChannel();
-    response.status(503).json({ error: error.message });
+    response.status(503).json({ error: (error as Error).message });
   }
 });
 

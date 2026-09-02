@@ -1,22 +1,24 @@
 import amqp from "amqplib";
+import type { ChannelModel, ConfirmChannel } from "amqplib";
 import { concessionarias } from "./concessionarias.js";
+import type { DrainedMessage } from "./types/rabbitmq.js";
 
 const amqpUrl = process.env.AMQP_URL || "amqp://guest:guest@localhost:5672/";
 const rabbitApiUrl = process.env.RABBITMQ_API_URL || "http://localhost:15672";
 const rabbitUser = process.env.RABBITMQ_USER || "guest";
 const rabbitPassword = process.env.RABBITMQ_PASSWORD || "guest";
 
-let connection;
-let channel;
+let connection: ChannelModel | undefined;
+let channel: ConfirmChannel | undefined;
 
-export async function getChannel() {
+export async function getChannel(): Promise<ConfirmChannel> {
   if (channel) return channel;
   connection = await amqp.connect(amqpUrl);
   connection.on("close", () => {
     connection = undefined;
     channel = undefined;
   });
-  connection.on("error", (error) =>
+  connection.on("error", (error: Error) =>
     console.error("RabbitMQ connection error:", error.message),
   );
   channel = await connection.createConfirmChannel();
@@ -27,11 +29,14 @@ export async function getChannel() {
   return channel;
 }
 
-export function resetChannel() {
+export function resetChannel(): void {
   channel = undefined;
 }
 
-export async function rabbitRequest(path, options = {}) {
+export async function rabbitRequest<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const token = Buffer.from(`${rabbitUser}:${rabbitPassword}`).toString(
     "base64",
   );
@@ -47,11 +52,15 @@ export async function rabbitRequest(path, options = {}) {
     throw new Error(
       `RabbitMQ API ${response.status}: ${await response.text()}`,
     );
-  return response.json();
+  return (await response.json()) as T;
 }
 
-export async function drainQueue(activeChannel, queue, maxMessages = 5000) {
-  const drained = [];
+export async function drainQueue(
+  activeChannel: ConfirmChannel,
+  queue: string,
+  maxMessages = 5000,
+): Promise<DrainedMessage[]> {
+  const drained: DrainedMessage[] = [];
   while (drained.length < maxMessages) {
     const message = await activeChannel.get(queue, { noAck: false });
     if (!message) break;
@@ -61,7 +70,11 @@ export async function drainQueue(activeChannel, queue, maxMessages = 5000) {
   return drained;
 }
 
-export async function refillQueue(activeChannel, queue, entries) {
+export async function refillQueue(
+  activeChannel: ConfirmChannel,
+  queue: string,
+  entries: DrainedMessage[],
+): Promise<void> {
   for (const entry of entries) {
     activeChannel.sendToQueue(queue, entry.content, {
       persistent: entry.properties.deliveryMode === 2,
