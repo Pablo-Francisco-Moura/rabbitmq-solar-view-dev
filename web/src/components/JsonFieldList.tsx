@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import "../css/json-field-list.css";
 
-function formatFieldValue(value) {
+function formatFieldValue(value: unknown): string {
   if (value === null || value === undefined) return "";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
@@ -24,10 +24,15 @@ function CopyIcon() {
   );
 }
 
-function CopyableField({ label, value }) {
+interface CopyableFieldProps {
+  label: string;
+  value: unknown;
+}
+
+function CopyableField({ label, value }: CopyableFieldProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [copied, setCopied] = useState(false);
-  const hoverTimeoutRef = useRef(null);
+  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   function handleMouseEnter() {
     hoverTimeoutRef.current = setTimeout(() => setTooltipVisible(true), 2000);
@@ -72,7 +77,11 @@ function CopyableField({ label, value }) {
   );
 }
 
-export default function JsonFieldList({ data }) {
+interface JsonFieldListProps {
+  data: Record<string, unknown>;
+}
+
+export default function JsonFieldList({ data }: JsonFieldListProps) {
   return (
     <div className="json-field-list">
       {Object.entries(data).map(([key, value]) => (

@@ -1,3 +1,5 @@
+import type { FaturaRelatorioRow, UnidadeStatus } from "../../types/unidades.js";
+
 export const RELATORIO_PRIORITY_COLUMNS = [
   "faturaId",
   "faturaMesReferencia",
@@ -13,7 +15,7 @@ export const SORTABLE_RELATORIO_COLUMNS = [
 ];
 export const RELATORIO_VISIBLE_ROWS = 12;
 
-export function orderRelatorioColumns(sampleRow) {
+export function orderRelatorioColumns(sampleRow: FaturaRelatorioRow): string[] {
   const keys = Object.keys(sampleRow);
   const priority = RELATORIO_PRIORITY_COLUMNS.filter((key) =>
     keys.includes(key),
@@ -22,12 +24,12 @@ export function orderRelatorioColumns(sampleRow) {
   return [...priority, ...rest];
 }
 
-export function relatorioColumnLabel(column) {
+export function relatorioColumnLabel(column: string): string {
   return column === "faturaUrlArquivoRaw" ? "faturaUrlArquivo" : column;
 }
 
-export function getLastNMonths(n) {
-  const months = [];
+export function getLastNMonths(n: number): string[] {
+  const months: string[] = [];
   const now = new Date();
   for (let i = 0; i < n; i++) {
     const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
@@ -38,13 +40,13 @@ export function getLastNMonths(n) {
   return months;
 }
 
-export function formatMonthLabel(yearMonth) {
+export function formatMonthLabel(yearMonth: string): string {
   const [year, month] = yearMonth.split("-");
   return `${month}/${year.slice(2)}`;
 }
 
-export function getMissingMonths(relatorio) {
-  const present = new Set();
+export function getMissingMonths(relatorio: FaturaRelatorioRow[]): string[] {
+  const present = new Set<string>();
   for (const row of relatorio) {
     if (row.faturaMesReferencia)
       present.add(String(row.faturaMesReferencia).slice(0, 7));
@@ -59,16 +61,16 @@ export function getMissingMonths(relatorio) {
 // 'YYYY-MM-DD' (dateStrings:true no server) interpretado no fuso LOCAL do
 // navegador - new Date('YYYY-MM-DD') direto interpreta como meia-noite UTC,
 // e em fuso negativo (Brasil, UTC-3) getDate()/getMonth() voltam um dia.
-function parseDateOnly(dateStr) {
+function parseDateOnly(dateStr: string): Date {
   const [year, month, day] = String(dateStr).slice(0, 10).split("-").map(Number);
   return new Date(year, month - 1, day);
 }
 
 // Ultima linha do relatorio com faturaDataLeituraAtual preenchida (mes mais
 // recente presente) - usada pra estimar quando a proxima fatura deve sair.
-function getLastReadingDate(relatorio) {
+function getLastReadingDate(relatorio: FaturaRelatorioRow[]): Date | null {
   let latestMonth = "";
-  let latestReading = null;
+  let latestReading: string | null = null;
   for (const row of relatorio) {
     if (!row.faturaDataLeituraAtual) continue;
     const month = row.faturaMesReferencia
@@ -84,19 +86,19 @@ function getLastReadingDate(relatorio) {
   return latestReading ? parseDateOnly(latestReading) : null;
 }
 
-function addDays(date, days) {
+function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
 }
 
-function formatDateBR(date) {
+function formatDateBR(date: Date): string {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   return `${day}/${month}/${date.getFullYear()}`;
 }
 
-export function getUnidadeStatus(relatorio) {
+export function getUnidadeStatus(relatorio: FaturaRelatorioRow[]): UnidadeStatus {
   const missing = getMissingMonths(relatorio);
   if (missing.length === 0) return { label: "OK", tone: "ok" };
   const currentMonth = getLastNMonths(1)[0];

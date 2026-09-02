@@ -5,18 +5,34 @@ import {
   searchUnidadesByNome,
 } from "../api/unidades.js";
 import { parseSearchIds, parseSearchNomes } from "../utils/unidadeIds.js";
-import UnitSearchForm from "../components/unit/UnitSearchForm.jsx";
-import UnitTabs from "../components/unit/UnitTabs.jsx";
-import UnitDetailsPanel from "../components/unit/UnitDetailsPanel.jsx";
-import InstallationCodesForm from "../components/unit/InstallationCodesForm.jsx";
-import FaturasAusentesSummary from "../components/unit/FaturasAusentesSummary.jsx";
-import FaturaRelatorioTable from "../components/unit/FaturaRelatorioTable.jsx";
-import FaturaPdfModal from "../components/unit/FaturaPdfModal.jsx";
+import UnitSearchForm from "../components/unit/UnitSearchForm.js";
+import UnitTabs from "../components/unit/UnitTabs.js";
+import UnitDetailsPanel from "../components/unit/UnitDetailsPanel.js";
+import type { ExpandedSections } from "../components/unit/UnitDetailsPanel.js";
+import InstallationCodesForm from "../components/unit/InstallationCodesForm.js";
+import FaturasAusentesSummary from "../components/unit/FaturasAusentesSummary.js";
+import FaturaRelatorioTable from "../components/unit/FaturaRelatorioTable.js";
+import FaturaPdfModal from "../components/unit/FaturaPdfModal.js";
+import type { UnidadeDetails } from "../types/unidades.js";
 
 const STORAGE_KEY = "rabbitmq-solar-view-dev:unit-page";
 const LARGE_SEARCH_CONFIRM_THRESHOLD = 50;
 
-function loadStoredState() {
+interface Status {
+  ok: boolean;
+  message: string;
+}
+
+interface StoredState {
+  searchText?: string;
+  resultsById?: Record<number, UnidadeDetails>;
+  foundIds?: number[];
+  selectedId?: number | null;
+  faturaCodigoInstalacao?: string;
+  faturaNewCodigoInstalacao?: string;
+}
+
+function loadStoredState(): StoredState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -29,16 +45,16 @@ export default function UnitPage() {
   const [searchText, setSearchText] = useState(
     () => loadStoredState()?.searchText ?? "",
   );
-  const [resultsById, setResultsById] = useState(
+  const [resultsById, setResultsById] = useState<Record<number, UnidadeDetails>>(
     () => loadStoredState()?.resultsById ?? {},
   );
-  const [foundIds, setFoundIds] = useState(
+  const [foundIds, setFoundIds] = useState<number[]>(
     () => loadStoredState()?.foundIds ?? [],
   );
-  const [selectedId, setSelectedId] = useState(
+  const [selectedId, setSelectedId] = useState<number | null>(
     () => loadStoredState()?.selectedId ?? null,
   );
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fetchDone, setFetchDone] = useState(0);
   const [fetchTotal, setFetchTotal] = useState(0);
@@ -51,16 +67,16 @@ export default function UnitPage() {
     () => loadStoredState()?.faturaNewCodigoInstalacao ?? "",
   );
   const [saving, setSaving] = useState(false);
-  const [saveStatus, setSaveStatus] = useState(null);
-  const [expandedSections, setExpandedSections] = useState({
+  const [saveStatus, setSaveStatus] = useState<Status | null>(null);
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     unidade: false,
     faturaCredencial: false,
     concessionaria: false,
     integrador: false,
   });
-  const [pdfModalUrl, setPdfModalUrl] = useState(null);
+  const [pdfModalUrl, setPdfModalUrl] = useState<string | null>(null);
 
-  function toggleSection(name) {
+  function toggleSection(name: keyof ExpandedSections) {
     setExpandedSections((current) => ({
       ...current,
       [name]: !current[name],
@@ -92,7 +108,7 @@ export default function UnitPage() {
     faturaNewCodigoInstalacao,
   ]);
 
-  function selectUnidade(id, resultsSource) {
+  function selectUnidade(id: number | null, resultsSource: Record<number, UnidadeDetails>) {
     setSelectedId(id);
     const data = id != null ? resultsSource[id] : null;
     setFaturaCodigoInstalacao(data?.unidade.faturaCodigoInstalacao ?? "");
@@ -109,14 +125,14 @@ export default function UnitPage() {
     cancelSearchRef.current = true;
   }
 
-  async function fetchUnidadesByIds(ids) {
+  async function fetchUnidadesByIds(ids: number[]) {
     cancelSearchRef.current = false;
     setLoading(true);
     setFetchDone(0);
     setFetchTotal(ids.length);
 
-    const nextResults = {};
-    const failures = [];
+    const nextResults: Record<number, UnidadeDetails> = {};
+    const failures: { id: number; message: string }[] = [];
     let cancelled = false;
     for (const id of ids) {
       if (cancelSearchRef.current) {
@@ -126,7 +142,7 @@ export default function UnitPage() {
       try {
         nextResults[id] = await getUnidadeDetails(id);
       } catch (err) {
-        failures.push({ id, message: err.message });
+        failures.push({ id, message: (err as Error).message });
       }
       setFetchDone((current) => current + 1);
     }
@@ -150,7 +166,7 @@ export default function UnitPage() {
     }
   }
 
-  async function handleSearch(event) {
+  async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
     const trimmed = searchText.trim();
     if (!trimmed) return;
@@ -175,7 +191,7 @@ export default function UnitPage() {
         for (const found of results.flat()) idSet.add(found.unidadeId);
       } catch (err) {
         setLoading(false);
-        setError(err.message);
+        setError((err as Error).message);
         return;
       }
     }
@@ -207,13 +223,13 @@ export default function UnitPage() {
     await fetchUnidadesByIds(ids);
   }
 
-  function handleSelectUnidade(id) {
+  function handleSelectUnidade(id: number) {
     if (id === selectedId) return;
     setSaveStatus(null);
     selectUnidade(id, resultsById);
   }
 
-  function handleRemoveUnidade(id) {
+  function handleRemoveUnidade(id: number) {
     const nextFoundIds = foundIds.filter((foundId) => foundId !== id);
     const nextResultsById = { ...resultsById };
     delete nextResultsById[id];
@@ -227,7 +243,7 @@ export default function UnitPage() {
     }
   }
 
-  async function handleSave(event) {
+  async function handleSave(event: React.FormEvent) {
     event.preventDefault();
     if (selectedId == null || !resultsById[selectedId]) return;
     if (
@@ -247,7 +263,7 @@ export default function UnitPage() {
       setResultsById((current) => ({ ...current, [selectedId]: data }));
       setSaveStatus({ ok: true, message: "Códigos atualizados." });
     } catch (err) {
-      setSaveStatus({ ok: false, message: err.message });
+      setSaveStatus({ ok: false, message: (err as Error).message });
     } finally {
       setSaving(false);
     }

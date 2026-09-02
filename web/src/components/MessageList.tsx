@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react";
 import { getUnidadeNomes } from "../api/unidades.js";
 import "../css/message-list.css";
+import type { QueueMessage } from "../types/queues.js";
 
-function parsePayload(message) {
+interface ParsedPayload {
+  credential?: { id?: number; unityId?: number };
+  [key: string]: unknown;
+}
+
+function parsePayload(message: QueueMessage): ParsedPayload | null {
   if (message.payload == null) return null;
   try {
     return JSON.parse(message.payload);
   } catch {
     return null;
   }
+}
+
+interface MessageListProps {
+  queueName: string | null;
+  messages: QueueMessage[];
+  loading: boolean;
+  error: string | null;
+  onRefresh: () => void;
+  onDelete: (index: number, payload: string) => Promise<void>;
 }
 
 export default function MessageList({
@@ -18,16 +33,18 @@ export default function MessageList({
   error,
   onRefresh,
   onDelete,
-}) {
-  const [deletingIndex, setDeletingIndex] = useState(null);
-  const [unidadeNomes, setUnidadeNomes] = useState({});
+}: MessageListProps) {
+  const [deletingIndex, setDeletingIndex] = useState<number | null>(null);
+  const [unidadeNomes, setUnidadeNomes] = useState<Record<number, string>>({});
 
   useEffect(() => {
     const unityIds = [
       ...new Set(
         messages
           .map((message) => parsePayload(message)?.credential?.unityId)
-          .filter((id) => id != null && !(id in unidadeNomes)),
+          .filter(
+            (id): id is number => id != null && !(id in unidadeNomes),
+          ),
       ),
     ];
     if (unityIds.length === 0) return;
@@ -38,7 +55,11 @@ export default function MessageList({
       .catch(() => {});
   }, [messages]);
 
-  async function handleDelete(event, index, message) {
+  async function handleDelete(
+    event: React.MouseEvent,
+    index: number,
+    message: QueueMessage,
+  ) {
     event.preventDefault();
     event.stopPropagation();
     if (!window.confirm("Excluir esta mensagem da fila? Essa ação não pode ser desfeita."))
@@ -73,7 +94,7 @@ export default function MessageList({
           const parsed = parsePayload(message);
           const credentialId = parsed?.credential?.id;
           const unityId = parsed?.credential?.unityId;
-          const titleParts = [];
+          const titleParts: string[] = [];
           if (credentialId != null) titleParts.push(`Credencial: ${credentialId}`);
           if (unityId != null) {
             titleParts.push(`Unidade: ${unityId}`);

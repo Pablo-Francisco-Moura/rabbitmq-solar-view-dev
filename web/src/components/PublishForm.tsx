@@ -2,8 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { getUnidadePayload } from "../api/unidades.js";
 import { parseUnidadeIds } from "../utils/unidadeIds.js";
 import "../css/publish-form.css";
+import type { Queue } from "../types/queues.js";
+import type { Concessionaria } from "../types/concessionarias.js";
 
-function buildEmptyPayload(concessionaria) {
+interface Status {
+  ok: boolean;
+  message: string;
+}
+
+function buildEmptyPayload(concessionaria: Concessionaria | null) {
   return {
     companyId: Number(concessionaria?.id) || 0,
     credential: {},
@@ -14,7 +21,17 @@ function buildEmptyPayload(concessionaria) {
   };
 }
 
-export default function PublishForm({ queues, concessionaria, onPublish }) {
+interface PublishFormProps {
+  queues: Queue[];
+  concessionaria: Concessionaria | null;
+  onPublish: (
+    queue: string,
+    payload: Record<string, unknown>,
+    priority: number,
+  ) => Promise<void>;
+}
+
+export default function PublishForm({ queues, concessionaria, onPublish }: PublishFormProps) {
   const [queue, setQueue] = useState(queues[0]?.name || "");
   const [priority, setPriority] = useState(0);
   const [unidadeIdsText, setUnidadeIdsText] = useState("");
@@ -23,10 +40,10 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
   const [text, setText] = useState(() =>
     JSON.stringify(buildEmptyPayload(concessionaria), null, 2),
   );
-  const [status, setStatus] = useState(null);
+  const [status, setStatus] = useState<Status | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitDone, setSubmitDone] = useState(0);
-  const [submitTotal, setSubmitTotal] = useState(null);
+  const [submitTotal, setSubmitTotal] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
 
   const unidadeIds = useMemo(
@@ -55,7 +72,7 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
         const payload = await getUnidadePayload(unidadeIds[0]);
         setText(JSON.stringify(payload, null, 2));
       } catch (error) {
-        setStatus({ ok: false, message: error.message });
+        setStatus({ ok: false, message: (error as Error).message });
       } finally {
         setFetching(false);
       }
@@ -63,12 +80,12 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
     }
 
     const payloads = [];
-    const failures = [];
+    const failures: { id: number; message: string }[] = [];
     for (const id of unidadeIds) {
       try {
         payloads.push(await getUnidadePayload(id));
       } catch (error) {
-        failures.push({ id, message: error.message });
+        failures.push({ id, message: (error as Error).message });
       }
       setFetchDone((current) => current + 1);
     }
@@ -90,11 +107,11 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
     }
   }
 
-  async function handleSubmit(event) {
+  async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setStatus(null);
 
-    let payload;
+    let payload: unknown;
     try {
       payload = JSON.parse(text);
     } catch {
@@ -106,10 +123,10 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
       setSubmitting(true);
       setSubmitTotal(null);
       try {
-        await onPublish(queue, payload, Number(priority));
+        await onPublish(queue, payload as Record<string, unknown>, Number(priority));
         setStatus({ ok: true, message: "Mensagem publicada." });
       } catch (error) {
-        setStatus({ ok: false, message: error.message });
+        setStatus({ ok: false, message: (error as Error).message });
       } finally {
         setSubmitting(false);
       }
@@ -124,12 +141,12 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
     setSubmitting(true);
     setSubmitDone(0);
     setSubmitTotal(payload.length);
-    const failures = [];
+    const failures: { index: number; message: string }[] = [];
     for (let index = 0; index < payload.length; index++) {
       try {
         await onPublish(queue, payload[index], Number(priority));
       } catch (error) {
-        failures.push({ index, message: error.message });
+        failures.push({ index, message: (error as Error).message });
       }
       setSubmitDone((current) => current + 1);
     }
@@ -198,7 +215,7 @@ export default function PublishForm({ queues, concessionaria, onPublish }) {
             min={0}
             max={2}
             value={priority}
-            onChange={(event) => setPriority(event.target.value)}
+            onChange={(event) => setPriority(Number(event.target.value))}
           />
         </label>
       </div>

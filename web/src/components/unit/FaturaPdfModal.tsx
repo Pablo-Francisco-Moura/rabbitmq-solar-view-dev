@@ -1,29 +1,36 @@
 import { useEffect, useState } from "react";
 import { extractFatura } from "../../api/fatura.js";
 import "../../css/pdf-modal.css";
+import type { ExtractEnv, ExtractResult } from "../../types/fatura.js";
 
-export default function FaturaPdfModal({ url, companyId, onClose }) {
-  const [extracting, setExtracting] = useState(null);
-  const [extractResult, setExtractResult] = useState(null);
-  const [extractError, setExtractError] = useState(null);
+interface FaturaPdfModalProps {
+  url: string;
+  companyId: number | null | undefined;
+  onClose: () => void;
+}
+
+export default function FaturaPdfModal({ url, companyId, onClose }: FaturaPdfModalProps) {
+  const [extracting, setExtracting] = useState<ExtractEnv | null>(null);
+  const [extractResult, setExtractResult] = useState<ExtractResult | null>(null);
+  const [extractError, setExtractError] = useState<string | null>(null);
 
   useEffect(() => {
-    function handleKeyDown(event) {
+    function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  async function handleExtract(env) {
+  async function handleExtract(env: ExtractEnv) {
     if (!Number.isInteger(companyId)) return;
     setExtracting(env);
     setExtractError(null);
     try {
-      const result = await extractFatura(env, companyId, url);
+      const result = await extractFatura(env, companyId as number, url);
       setExtractResult(result);
     } catch (err) {
-      setExtractError(err.message);
+      setExtractError((err as Error).message);
       setExtractResult(null);
     } finally {
       setExtracting(null);

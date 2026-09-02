@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
-import QueueCard from "../components/QueueCard.jsx";
-import MessageList from "../components/MessageList.jsx";
-import PublishForm from "../components/PublishForm.jsx";
+import QueueCard from "../components/QueueCard.js";
+import MessageList from "../components/MessageList.js";
+import PublishForm from "../components/PublishForm.js";
 import { getConcessionarias } from "../api/concessionarias.js";
 import {
   getQueues,
@@ -9,11 +9,13 @@ import {
   publishMessage,
   deleteMessage,
 } from "../api/queues.js";
+import type { Concessionaria } from "../types/concessionarias.js";
+import type { Queue, QueueMessage } from "../types/queues.js";
 
 const POLL_INTERVAL_MS = 4000;
 const STORAGE_KEY = "rabbitmq-solar-view-dev:queues-page";
 
-function loadStoredConcessionariaId() {
+function loadStoredConcessionariaId(): string | null {
   try {
     return localStorage.getItem(STORAGE_KEY);
   } catch {
@@ -22,16 +24,16 @@ function loadStoredConcessionariaId() {
 }
 
 export default function QueuesPage() {
-  const [concessionarias, setConcessionarias] = useState([]);
-  const [concessionariaId, setConcessionariaId] = useState(
+  const [concessionarias, setConcessionarias] = useState<Concessionaria[]>([]);
+  const [concessionariaId, setConcessionariaId] = useState<string | null>(
     () => loadStoredConcessionariaId(),
   );
-  const [queues, setQueues] = useState([]);
-  const [queuesError, setQueuesError] = useState(null);
-  const [selectedQueue, setSelectedQueue] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const [queues, setQueues] = useState<Queue[]>([]);
+  const [queuesError, setQueuesError] = useState<string | null>(null);
+  const [selectedQueue, setSelectedQueue] = useState<string | null>(null);
+  const [messages, setMessages] = useState<QueueMessage[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
-  const [messagesError, setMessagesError] = useState(null);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
 
   const concessionaria =
     concessionarias.find((c) => c.id === concessionariaId) || null;
@@ -42,11 +44,11 @@ export default function QueuesPage() {
       setQueues(data);
       setQueuesError(null);
     } catch (error) {
-      setQueuesError(error.message);
+      setQueuesError((error as Error).message);
     }
   }, []);
 
-  const refreshMessages = useCallback(async (queueName) => {
+  const refreshMessages = useCallback(async (queueName: string | null) => {
     if (!queueName) return;
     setMessagesLoading(true);
     try {
@@ -54,7 +56,7 @@ export default function QueuesPage() {
       setMessages(data);
       setMessagesError(null);
     } catch (error) {
-      setMessagesError(error.message);
+      setMessagesError((error as Error).message);
     } finally {
       setMessagesLoading(false);
     }
@@ -96,7 +98,7 @@ export default function QueuesPage() {
     refreshMessages(selectedQueue);
   }, [selectedQueue, refreshMessages]);
 
-  async function handlePublish(queue, payload, priority) {
+  async function handlePublish(queue: string, payload: Record<string, unknown>, priority: number) {
     await publishMessage(queue, payload, priority);
     await refreshQueues();
     if (queue === selectedQueue) await refreshMessages(queue);
@@ -106,12 +108,12 @@ export default function QueuesPage() {
     await Promise.all([refreshQueues(), refreshMessages(selectedQueue)]);
   }
 
-  async function handleDelete(index, payload) {
-    let deleteError = null;
+  async function handleDelete(index: number, payload: string) {
+    let deleteError: string | null = null;
     try {
-      await deleteMessage(selectedQueue, index, payload);
+      await deleteMessage(selectedQueue as string, index, payload);
     } catch (error) {
-      deleteError = error.message;
+      deleteError = (error as Error).message;
     }
     await refreshQueues();
     await refreshMessages(selectedQueue);

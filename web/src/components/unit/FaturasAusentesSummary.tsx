@@ -9,8 +9,14 @@ import {
 } from "../../utils/unit/summaryClipboard.js";
 import "../../css/units-details.css";
 import "../../css/units-summary.css";
+import type { UnidadeDetails } from "../../types/unidades.js";
 
-export default function FaturasAusentesSummary({ foundIds, resultsById }) {
+interface FaturasAusentesSummaryProps {
+  foundIds: number[];
+  resultsById: Record<number, UnidadeDetails>;
+}
+
+export default function FaturasAusentesSummary({ foundIds, resultsById }: FaturasAusentesSummaryProps) {
   const [copied, setCopied] = useState(false);
 
   const rows = foundIds.map((id) => ({

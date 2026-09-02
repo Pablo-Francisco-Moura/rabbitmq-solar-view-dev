@@ -1,6 +1,14 @@
 import "../css/queue-card.css";
+import type { Queue } from "../types/queues.js";
 
-export default function QueueCard({ queue, label, active, onSelect }) {
+interface QueueCardProps {
+  queue: Queue;
+  label: string;
+  active: boolean;
+  onSelect: () => void;
+}
+
+export default function QueueCard({ queue, label, active, onSelect }: QueueCardProps) {
   return (
     <button
       type="button"

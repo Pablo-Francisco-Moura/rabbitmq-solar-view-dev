@@ -1,6 +1,16 @@
 import { parseSearchIds, parseSearchNomes } from "../../utils/unidadeIds.js";
 import "../../css/units-search.css";
 
+interface UnitSearchFormProps {
+  searchText: string;
+  onSearchTextChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
+  loading: boolean;
+  fetchDone: number;
+  fetchTotal: number;
+  onCancel: () => void;
+}
+
 export default function UnitSearchForm({
   searchText,
   onSearchTextChange,
@@ -9,7 +19,7 @@ export default function UnitSearchForm({
   fetchDone,
   fetchTotal,
   onCancel,
-}) {
+}: UnitSearchFormProps) {
   return (
     <form className="units-search" onSubmit={onSubmit}>
       <label>

@@ -1,4 +1,13 @@
 import "../../css/units-tabs.css";
+import type { UnidadeDetails } from "../../types/unidades.js";
+
+interface UnitTabsProps {
+  foundIds: number[];
+  selectedId: number | null;
+  resultsById: Record<number, UnidadeDetails>;
+  onSelect: (id: number) => void;
+  onRemove: (id: number) => void;
+}
 
 export default function UnitTabs({
   foundIds,
@@ -6,7 +15,7 @@ export default function UnitTabs({
   resultsById,
   onSelect,
   onRemove,
-}) {
+}: UnitTabsProps) {
   return (
     <div className="units-tabs">
       {foundIds.map((id) => (

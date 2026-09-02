@@ -10,8 +10,14 @@ import {
 import "../../css/units-details.css";
 import "../../css/units-relatorio.css";
 import "../../css/table.css";
+import type { FaturaRelatorioRow } from "../../types/unidades.js";
 
-export default function FaturaRelatorioTable({ relatorio, onOpenPdf }) {
+interface FaturaRelatorioTableProps {
+  relatorio: FaturaRelatorioRow[];
+  onOpenPdf: (url: string) => void;
+}
+
+export default function FaturaRelatorioTable({ relatorio, onOpenPdf }: FaturaRelatorioTableProps) {
   const [relatorioSortColumn, setRelatorioSortColumn] = useState(
     "faturaMesReferencia",
   );
@@ -90,8 +96,8 @@ export default function FaturaRelatorioTable({ relatorio, onOpenPdf }) {
                           <button
                             type="button"
                             className="units-relatorio__pdf-link"
-                            title={value}
-                            onClick={() => onOpenPdf(value)}
+                            title={String(value)}
+                            onClick={() => onOpenPdf(String(value))}
                           >
                             Ver PDF
                           </button>

@@ -1,7 +1,7 @@
 import { NavLink, Navigate, Route, Routes } from "react-router-dom";
-import QueuesPage from "./pages/QueuesPage.jsx";
-import UnitPage from "./pages/UnitPage.jsx";
-import UnitsPage from "./pages/UnitsPage.jsx";
+import QueuesPage from "./pages/QueuesPage.js";
+import UnitPage from "./pages/UnitPage.js";
+import UnitsPage from "./pages/UnitsPage.js";
 
 export default function App() {
   return (

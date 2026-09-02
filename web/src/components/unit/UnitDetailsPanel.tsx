@@ -1,5 +1,6 @@
-import AccordionSection from "./AccordionSection.jsx";
+import AccordionSection from "./AccordionSection.js";
 import "../../css/units-details.css";
+import type { UnidadeDetails } from "../../types/unidades.js";
 
 const UNIDADE_SUMMARY_FIELDS = [
   "unidadeId",
@@ -32,7 +33,20 @@ const CREDENCIAL_SUMMARY_FIELDS = [
 const CONCESSIONARIA_SUMMARY_FIELDS = ["concessionariaId", "nomeConcessionaria"];
 const INTEGRADOR_SUMMARY_FIELDS = ["usuarioId", "usuNome", "usuEmail"];
 
-export default function UnitDetailsPanel({ details, expandedSections, onToggleSection }) {
+export interface ExpandedSections {
+  unidade: boolean;
+  faturaCredencial: boolean;
+  concessionaria: boolean;
+  integrador: boolean;
+}
+
+interface UnitDetailsPanelProps {
+  details: UnidadeDetails;
+  expandedSections: ExpandedSections;
+  onToggleSection: (name: keyof ExpandedSections) => void;
+}
+
+export default function UnitDetailsPanel({ details, expandedSections, onToggleSection }: UnitDetailsPanelProps) {
   return (
     <section className="units-details">
       <AccordionSection

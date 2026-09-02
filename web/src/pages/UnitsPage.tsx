@@ -6,10 +6,23 @@ import "../css/units-search.css";
 import "../css/units-details.css";
 import "../css/units-page.css";
 import "../css/table.css";
+import type { GestaoSceeVinculo } from "../types/gestaoScee.js";
 
 const STORAGE_KEY = "rabbitmq-solar-view-dev:units-page";
 
-function loadStoredState() {
+interface GeradoraGroup {
+  geradoraId: number;
+  beneficiarias: GestaoSceeVinculo[];
+}
+
+interface StoredState {
+  searchText?: string;
+  groups?: GeradoraGroup[];
+  nomes?: Record<number, string>;
+  notFoundIds?: number[];
+}
+
+function loadStoredState(): StoredState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -18,7 +31,7 @@ function loadStoredState() {
   }
 }
 
-function buildCopyText(groups, notFoundIds) {
+function buildCopyText(groups: GeradoraGroup[], notFoundIds: number[]): string {
   const blocks = groups.map((group) =>
     [
       group.geradoraId,
@@ -29,12 +42,12 @@ function buildCopyText(groups, notFoundIds) {
   return blocks.join("\n\n");
 }
 
-function groupByGeradora(vinculos) {
-  const groups = new Map();
+function groupByGeradora(vinculos: GestaoSceeVinculo[]): GeradoraGroup[] {
+  const groups = new Map<number, GestaoSceeVinculo[]>();
   for (const vinculo of vinculos) {
     const geradoraId = vinculo.unidadeGeradoraId;
     if (!groups.has(geradoraId)) groups.set(geradoraId, []);
-    groups.get(geradoraId).push(vinculo);
+    groups.get(geradoraId)!.push(vinculo);
   }
   return [...groups.entries()]
     .sort((a, b) => a[0] - b[0])
@@ -50,13 +63,17 @@ export default function UnitsPage() {
   const [searchText, setSearchText] = useState(
     () => loadStoredState()?.searchText ?? "",
   );
-  const [groups, setGroups] = useState(() => loadStoredState()?.groups ?? []);
-  const [nomes, setNomes] = useState(() => loadStoredState()?.nomes ?? {});
-  const [notFoundIds, setNotFoundIds] = useState(
+  const [groups, setGroups] = useState<GeradoraGroup[]>(
+    () => loadStoredState()?.groups ?? [],
+  );
+  const [nomes, setNomes] = useState<Record<number, string>>(
+    () => loadStoredState()?.nomes ?? {},
+  );
+  const [notFoundIds, setNotFoundIds] = useState<number[]>(
     () => loadStoredState()?.notFoundIds ?? [],
   );
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   const searchIds = parseUnidadeIds(searchText);
@@ -75,7 +92,7 @@ export default function UnitsPage() {
     }
   }, [searchText, groups, nomes, notFoundIds]);
 
-  async function handleSearch(event) {
+  async function handleSearch(event: React.FormEvent) {
     event.preventDefault();
     if (searchIds.length === 0) return;
 
@@ -99,7 +116,7 @@ export default function UnitsPage() {
     } catch (err) {
       setGroups([]);
       setNotFoundIds([]);
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }

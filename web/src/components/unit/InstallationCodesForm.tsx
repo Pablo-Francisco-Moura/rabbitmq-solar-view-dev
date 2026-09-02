@@ -1,5 +1,20 @@
 import "../../css/publish-form.css";
 
+interface Status {
+  ok: boolean;
+  message: string;
+}
+
+interface InstallationCodesFormProps {
+  faturaCodigoInstalacao: string;
+  onFaturaCodigoInstalacaoChange: (value: string) => void;
+  faturaNewCodigoInstalacao: string;
+  onFaturaNewCodigoInstalacaoChange: (value: string) => void;
+  onSubmit: (event: React.FormEvent) => void;
+  saving: boolean;
+  saveStatus: Status | null;
+}
+
 export default function InstallationCodesForm({
   faturaCodigoInstalacao,
   onFaturaCodigoInstalacaoChange,
@@ -8,7 +23,7 @@ export default function InstallationCodesForm({
   onSubmit,
   saving,
   saveStatus,
-}) {
+}: InstallationCodesFormProps) {
   return (
     <form className="publish-form" onSubmit={onSubmit}>
       <h2>Atualizar códigos de instalação</h2>

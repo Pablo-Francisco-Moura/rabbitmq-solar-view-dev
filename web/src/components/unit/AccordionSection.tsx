@@ -1,21 +1,36 @@
-import JsonFieldList from "../JsonFieldList.jsx";
+import JsonFieldList from "../JsonFieldList.js";
 import "../../css/accordion-section.css";
 
-function orderFields(object, priorityFields) {
+function orderFields(
+  object: Record<string, unknown>,
+  priorityFields: string[],
+): Record<string, unknown> {
   const keys = Object.keys(object);
   const priority = priorityFields.filter((key) => keys.includes(key));
   const rest = keys.filter((key) => !priorityFields.includes(key));
-  const ordered = {};
+  const ordered: Record<string, unknown> = {};
   for (const key of [...priority, ...rest]) ordered[key] = object[key];
   return ordered;
 }
 
-function pickFields(object, fields) {
-  const picked = {};
+function pickFields(
+  object: Record<string, unknown>,
+  fields: string[],
+): Record<string, unknown> {
+  const picked: Record<string, unknown> = {};
   for (const key of fields) {
     if (key in object) picked[key] = object[key];
   }
   return picked;
+}
+
+interface AccordionSectionProps {
+  title: string;
+  data: Record<string, unknown> | null;
+  summaryFields: string[];
+  expanded: boolean;
+  onToggle: () => void;
+  emptyMessage: string;
 }
 
 export default function AccordionSection({
@@ -25,7 +40,7 @@ export default function AccordionSection({
   expanded,
   onToggle,
   emptyMessage,
-}) {
+}: AccordionSectionProps) {
   return (
     <>
       <div className="accordion-header" onClick={onToggle}>
