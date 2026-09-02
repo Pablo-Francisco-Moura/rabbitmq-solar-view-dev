@@ -8,6 +8,7 @@ import {
   getUnidadeDetails,
   updateUnidadeInstallationCodes,
   getGestaoSceeByUnidadeIds,
+  searchUnidadesByNome,
 } from "./db.js";
 
 const app = express();
@@ -201,6 +202,17 @@ app.get("/api/unidades/nomes", async (request, response) => {
   try {
     const nomes = await getUnidadeNomes(ids);
     response.json(nomes);
+  } catch (error) {
+    response.status(502).json({ error: error.message });
+  }
+});
+
+app.get("/api/unidades/busca", async (request, response) => {
+  const nome = String(request.query.nome || "").trim();
+  if (!nome) return response.status(400).json({ error: "nome invalido." });
+  try {
+    const unidades = await searchUnidadesByNome(nome);
+    response.json(unidades);
   } catch (error) {
     response.status(502).json({ error: error.message });
   }

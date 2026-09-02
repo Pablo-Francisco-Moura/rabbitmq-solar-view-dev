@@ -10,8 +10,7 @@ function getPool() {
         process.env.IDC_MYSQL_PORT_PROD || process.env.IDC_MYSQL_PORT || 3306,
       ),
       user: process.env.IDC_MYSQL_USER_PROD || process.env.IDC_MYSQL_USER,
-      password:
-        process.env.IDC_MYSQL_PASS_PROD || process.env.IDC_MYSQL_PASS,
+      password: process.env.IDC_MYSQL_PASS_PROD || process.env.IDC_MYSQL_PASS,
       database: process.env.IDC_MYSQL_DB_PROD || process.env.IDC_MYSQL_DB,
       waitForConnections: true,
       connectionLimit: 5,
@@ -178,4 +177,15 @@ export async function getUnidadeNomes(unidadeIds) {
   const nomes = {};
   for (const row of rows) nomes[row.unidadeId] = row.uniNome;
   return nomes;
+}
+
+// Busca por nome (LIKE parcial), acionada na UI quando o usuario digita o nome
+// entre aspas duplas em vez de um unidadeId.
+export async function searchUnidadesByNome(nome) {
+  const db = getPool();
+  const [rows] = await db.query(
+    `SELECT unidadeId, uniNome FROM unidade WHERE uniNome LIKE ? ORDER BY uniNome LIMIT 200`,
+    [`%${nome}%`],
+  );
+  return rows;
 }
