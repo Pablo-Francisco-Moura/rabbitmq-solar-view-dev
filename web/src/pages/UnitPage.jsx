@@ -3,10 +3,12 @@ import {
   getUnidadeDetails,
   updateUnidadeInstallationCodes,
   extractFatura,
+  searchUnidadesByNome,
 } from "../api.js";
-import { parseUnidadeIds } from "../unidadeIds.js";
+import { parseSearchIds, parseSearchNomes } from "../unidadeIds.js";
 
 const STORAGE_KEY = "rabbitmq-solar-view-dev:unit-page";
+const LARGE_SEARCH_CONFIRM_THRESHOLD = 50;
 const RELATORIO_PRIORITY_COLUMNS = [
   "faturaId",
   "faturaMesReferencia",
@@ -347,6 +349,7 @@ export default function UnitPage() {
   const [loading, setLoading] = useState(false);
   const [fetchDone, setFetchDone] = useState(0);
   const [fetchTotal, setFetchTotal] = useState(0);
+  const cancelSearchRef = useRef(false);
 
   const [faturaCodigoInstalacao, setFaturaCodigoInstalacao] = useState(
     () => loadStoredState()?.faturaCodigoInstalacao ?? "",
@@ -487,20 +490,24 @@ export default function UnitPage() {
     setShowAllRelatorio(false);
   }
 
-  async function handleSearch(event) {
-    event.preventDefault();
-    const ids = parseUnidadeIds(searchText);
-    if (ids.length === 0) return;
+  function handleCancelSearch() {
+    cancelSearchRef.current = true;
+  }
 
+  async function fetchUnidadesByIds(ids) {
+    cancelSearchRef.current = false;
     setLoading(true);
     setFetchDone(0);
     setFetchTotal(ids.length);
-    setError(null);
-    setSaveStatus(null);
 
     const nextResults = {};
     const failures = [];
+    let cancelled = false;
     for (const id of ids) {
+      if (cancelSearchRef.current) {
+        cancelled = true;
+        break;
+      }
       try {
         nextResults[id] = await getUnidadeDetails(id);
       } catch (err) {
@@ -515,13 +522,74 @@ export default function UnitPage() {
     setFoundIds(foundNow);
     selectUnidade(foundNow[0] ?? null, nextResults);
 
-    if (failures.length > 0) {
+    if (cancelled) {
+      setError(
+        `Busca cancelada. ${foundNow.length}/${ids.length} unidades carregadas antes do cancelamento.`,
+      );
+    } else if (failures.length > 0) {
       setError(
         `${foundNow.length}/${ids.length} encontradas. Falhas: ${failures
           .map((failure) => `${failure.id}: ${failure.message}`)
           .join("; ")}`,
       );
     }
+  }
+
+  async function handleSearch(event) {
+    event.preventDefault();
+    const trimmed = searchText.trim();
+    if (!trimmed) return;
+
+    setError(null);
+    setSaveStatus(null);
+
+    const directIds = parseSearchIds(trimmed);
+    const nomes = parseSearchNomes(trimmed);
+    if (directIds.length === 0 && nomes.length === 0) return;
+
+    const idSet = new Set(directIds);
+
+    if (nomes.length > 0) {
+      setLoading(true);
+      setFetchDone(0);
+      setFetchTotal(0);
+      try {
+        const results = await Promise.all(
+          nomes.map((nome) => searchUnidadesByNome(nome)),
+        );
+        for (const found of results.flat()) idSet.add(found.unidadeId);
+      } catch (err) {
+        setLoading(false);
+        setError(err.message);
+        return;
+      }
+    }
+
+    const ids = [...idSet];
+    if (ids.length === 0) {
+      setLoading(false);
+      setError(
+        `Nenhuma unidade encontrada para ${nomes
+          .map((nome) => `"${nome}"`)
+          .join(", ")}.`,
+      );
+      setResultsById({});
+      setFoundIds([]);
+      selectUnidade(null, {});
+      return;
+    }
+
+    if (
+      ids.length > LARGE_SEARCH_CONFIRM_THRESHOLD &&
+      !window.confirm(
+        `Essa busca vai carregar ${ids.length} unidades, uma por vez. Isso pode demorar. Deseja continuar?`,
+      )
+    ) {
+      setLoading(false);
+      return;
+    }
+
+    await fetchUnidadesByIds(ids);
   }
 
   function handleSelectUnidade(id) {
@@ -620,19 +688,43 @@ export default function UnitPage() {
       <form className="units-search" onSubmit={handleSearch}>
         <label>
           Unidade ID (uma ou várias, separadas por espaço, vírgula ou linha)
+          ou nome da unidade entre aspas duplas — pode misturar os dois
           <textarea
             rows={5}
-            placeholder={"Ex: 712383\nou várias:\n466422\n935969\n935970"}
+            placeholder={
+              'Ex: 712383\nou várias:\n466422\n935969\n935970\nou por nome:\n"UFV Sirius"\nou misturado:\n928153\n"UFV"'
+            }
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
           />
         </label>
-        <button
-          type="submit"
-          disabled={parseUnidadeIds(searchText).length === 0 || loading}
-        >
-          {loading ? `Buscando ${fetchDone}/${fetchTotal}…` : "Buscar"}
-        </button>
+        <div className="units-search__actions">
+          <button
+            type="submit"
+            disabled={
+              (parseSearchIds(searchText).length === 0 &&
+                parseSearchNomes(searchText).length === 0) ||
+              loading
+            }
+          >
+            {loading
+              ? fetchTotal > 0
+                ? `Buscando ${fetchDone}/${fetchTotal}…`
+                : "Buscando…"
+              : "Buscar"}
+          </button>
+          {loading && (
+            <button
+              type="button"
+              className="units-search__cancel"
+              onClick={handleCancelSearch}
+              aria-label="Cancelar busca"
+              title="Cancelar busca"
+            >
+              ×
+            </button>
+          )}
+        </div>
       </form>
 
       {foundIds.length > 0 && (
