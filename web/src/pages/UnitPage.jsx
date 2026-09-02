@@ -4,7 +4,7 @@ import {
   updateUnidadeInstallationCodes,
   searchUnidadesByNome,
 } from "../api/unidades.js";
-import { parseSearchIds, parseSearchNomes } from "../unidadeIds.js";
+import { parseSearchIds, parseSearchNomes } from "../utils/unidadeIds.js";
 import UnitSearchForm from "../components/unit/UnitSearchForm.jsx";
 import UnitTabs from "../components/unit/UnitTabs.jsx";
 import UnitDetailsPanel from "../components/unit/UnitDetailsPanel.jsx";

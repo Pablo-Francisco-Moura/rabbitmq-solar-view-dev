@@ -1,4 +1,4 @@
-import { parseSearchIds, parseSearchNomes } from "../../unidadeIds.js";
+import { parseSearchIds, parseSearchNomes } from "../../utils/unidadeIds.js";
 import "../../css/units-search.css";
 
 export default function UnitSearchForm({

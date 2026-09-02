@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getGestaoScee } from "../api/gestaoScee.js";
 import { getUnidadeNomes } from "../api/unidades.js";
-import { parseUnidadeIds } from "../unidadeIds.js";
+import { parseUnidadeIds } from "../utils/unidadeIds.js";
 import "../css/units-search.css";
 import "../css/units-details.css";
 import "../css/units-page.css";
