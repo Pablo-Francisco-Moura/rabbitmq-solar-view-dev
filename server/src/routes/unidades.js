@@ -1,0 +1,92 @@
+import { Router } from "express";
+import {
+  getUnidadeJobPayload,
+  getUnidadeNomes,
+  getUnidadeDetails,
+  updateUnidadeInstallationCodes,
+  searchUnidadesByNome,
+} from "../db/unidades.js";
+
+const router = Router();
+
+router.get("/api/unidades/nomes", async (request, response) => {
+  const ids = String(request.query.ids || "")
+    .split(",")
+    .map((id) => Number(id.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+  try {
+    const nomes = await getUnidadeNomes(ids);
+    response.json(nomes);
+  } catch (error) {
+    response.status(502).json({ error: error.message });
+  }
+});
+
+router.get("/api/unidades/busca", async (request, response) => {
+  const nome = String(request.query.nome || "").trim();
+  if (!nome) return response.status(400).json({ error: "nome invalido." });
+  try {
+    const unidades = await searchUnidadesByNome(nome);
+    response.json(unidades);
+  } catch (error) {
+    response.status(502).json({ error: error.message });
+  }
+});
+
+router.get("/api/unidades/:unidadeId", async (request, response) => {
+  const unidadeId = Number(request.params.unidadeId);
+  if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+    return response.status(400).json({ error: "unidadeId invalido." });
+  try {
+    const details = await getUnidadeDetails(unidadeId);
+    response.json(details);
+  } catch (error) {
+    const notFound = /nao encontrad/.test(error.message);
+    response.status(notFound ? 404 : 502).json({ error: error.message });
+  }
+});
+
+router.patch(
+  "/api/unidades/:unidadeId/codigos-instalacao",
+  async (request, response) => {
+    const unidadeId = Number(request.params.unidadeId);
+    if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+      return response.status(400).json({ error: "unidadeId invalido." });
+    const { faturaCodigoInstalacao, faturaNewCodigoInstalacao } =
+      request.body || {};
+    if (
+      (faturaCodigoInstalacao != null &&
+        typeof faturaCodigoInstalacao !== "string") ||
+      (faturaNewCodigoInstalacao != null &&
+        typeof faturaNewCodigoInstalacao !== "string")
+    )
+      return response
+        .status(400)
+        .json({ error: "Codigos devem ser texto." });
+    try {
+      const details = await updateUnidadeInstallationCodes(unidadeId, {
+        faturaCodigoInstalacao: faturaCodigoInstalacao ?? null,
+        faturaNewCodigoInstalacao: faturaNewCodigoInstalacao ?? null,
+      });
+      response.json(details);
+    } catch (error) {
+      const notFound = /nao encontrad/.test(error.message);
+      response.status(notFound ? 404 : 502).json({ error: error.message });
+    }
+  },
+);
+
+router.get("/api/unidades/:unidadeId/job-payload", async (request, response) => {
+  const unidadeId = Number(request.params.unidadeId);
+  if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+    return response.status(400).json({ error: "unidadeId invalido." });
+  try {
+    const payload = await getUnidadeJobPayload(unidadeId);
+    response.json(payload);
+  } catch (error) {
+    const notFound = /nao encontrad/.test(error.message);
+    response.status(notFound ? 404 : 502).json({ error: error.message });
+  }
+});
+
+export default router;

@@ -1,24 +1,4 @@
-import mysql from "mysql2/promise";
-
-let pool;
-
-function getPool() {
-  if (!pool) {
-    pool = mysql.createPool({
-      host: process.env.IDC_MYSQL_HOST_PROD || process.env.IDC_MYSQL_HOST,
-      port: Number(
-        process.env.IDC_MYSQL_PORT_PROD || process.env.IDC_MYSQL_PORT || 3306,
-      ),
-      user: process.env.IDC_MYSQL_USER_PROD || process.env.IDC_MYSQL_USER,
-      password: process.env.IDC_MYSQL_PASS_PROD || process.env.IDC_MYSQL_PASS,
-      database: process.env.IDC_MYSQL_DB_PROD || process.env.IDC_MYSQL_DB,
-      waitForConnections: true,
-      connectionLimit: 5,
-      dateStrings: true,
-    });
-  }
-  return pool;
-}
+import { getPool } from "./pool.js";
 
 // Espelha o job publicado hoje manualmente nas filas idc_*: dado o unidadeId,
 // busca fatura credencial + unidade e resolve o integradorId via
@@ -164,19 +144,6 @@ export async function updateUnidadeInstallationCodes(
   );
 
   return getUnidadeDetails(unidadeId);
-}
-
-// Dado um conjunto de unidadeIds (geradoras e/ou beneficiarias misturadas),
-// retorna todos os vinculos gestaoSCEE que tocam qualquer uma delas.
-export async function getGestaoSceeByUnidadeIds(unidadeIds) {
-  if (!unidadeIds.length) return [];
-  const db = getPool();
-  const [rows] = await db.query(
-    `SELECT * FROM gestaoSCEE
-     WHERE unidadeGeradoraId IN (?) OR unidadeBeneficiariaId IN (?)`,
-    [unidadeIds, unidadeIds],
-  );
-  return rows;
 }
 
 // Usado so para exibicao (titulo da mensagem na UI) — nunca entra no payload do job.
