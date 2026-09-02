@@ -122,11 +122,24 @@ export async function getUnidadeDetails(unidadeId) {
     concessionaria = concessionariaRows[0] || null;
   }
 
+  // unidade.uniIntegradorResponsavel guarda um usuarioId (nao um integradorId
+  // - ver getUnidadeJobPayload acima), entao o integrador e' o usuario dono
+  // desse id.
+  let integrador = null;
+  if (unidade.uniIntegradorResponsavel != null) {
+    const [integradorRows] = await db.query(
+      `SELECT * FROM usuario WHERE usuarioId = ?`,
+      [unidade.uniIntegradorResponsavel],
+    );
+    integrador = integradorRows[0] || null;
+  }
+
   return {
     unidade,
     faturaCredencial: credencialRows[0] || null,
     faturaRelatorioEnergetico: relatorioRows,
     concessionaria,
+    integrador,
   };
 }
 
