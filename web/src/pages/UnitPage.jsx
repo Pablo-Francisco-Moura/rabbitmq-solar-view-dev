@@ -51,6 +51,7 @@ const CREDENCIAL_SUMMARY_FIELDS = [
   "flagExcluida",
 ];
 const CONCESSIONARIA_SUMMARY_FIELDS = ["concessionariaId", "nomeConcessionaria"];
+const INTEGRADOR_SUMMARY_FIELDS = ["usuarioId", "usuNome", "usuEmail"];
 const RELATORIO_VISIBLE_ROWS = 12;
 
 function orderFields(object, priorityFields) {
@@ -486,6 +487,7 @@ export default function UnitPage() {
       unidade: false,
       faturaCredencial: false,
       concessionaria: false,
+      integrador: false,
     });
     setShowAllRelatorio(false);
   }
@@ -850,6 +852,31 @@ export default function UnitPage() {
                 />
               ) : (
                 <p>Nenhuma concessionária encontrada para esta unidade.</p>
+              )}
+
+              <div
+                className="accordion-header"
+                onClick={() => toggleSection("integrador")}
+              >
+                <h2>Integrador</h2>
+                {details.integrador && (
+                  <span className="accordion-toggle">
+                    {expandedSections.integrador
+                      ? "Mostrar menos ▲"
+                      : "Mostrar mais ▼"}
+                  </span>
+                )}
+              </div>
+              {details.integrador ? (
+                <JsonFieldList
+                  data={
+                    expandedSections.integrador
+                      ? orderFields(details.integrador, INTEGRADOR_SUMMARY_FIELDS)
+                      : pickFields(details.integrador, INTEGRADOR_SUMMARY_FIELDS)
+                  }
+                />
+              ) : (
+                <p>Nenhum integrador encontrado para esta unidade.</p>
               )}
             </section>
 
