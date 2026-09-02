@@ -1,3 +1,5 @@
+import "../../css/publish-form.css";
+
 export default function InstallationCodesForm({
   faturaCodigoInstalacao,
   onFaturaCodigoInstalacaoChange,

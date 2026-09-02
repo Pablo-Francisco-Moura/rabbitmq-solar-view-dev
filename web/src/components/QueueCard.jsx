@@ -1,3 +1,5 @@
+import "../css/queue-card.css";
+
 export default function QueueCard({ queue, label, active, onSelect }) {
   return (
     <button

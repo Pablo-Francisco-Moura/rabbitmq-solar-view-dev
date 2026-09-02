@@ -1,0 +1,110 @@
+.message-list {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.message-list__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.message-list ul {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 560px;
+  overflow-y: auto;
+}
+
+.message-list li {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.message-list details {
+  padding: 10px;
+}
+
+.message-list summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.message-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.message-list summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--muted);
+  transition: transform 0.15s ease;
+}
+
+.message-list details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.message-list__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+  margin-left: 18px;
+}
+
+.message-list__delete {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.85rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.message-list__delete:hover {
+  background: rgba(229, 83, 75, 0.15);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.message-list__delete:disabled {
+  opacity: 0.5;
+}
+
+.message-list__summary {
+  display: flex;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.message-list pre {
+  margin: 10px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.85rem;
+}
+
+.message-list__error {
+  color: var(--error);
+}
+
+.message-list__empty {
+  color: var(--muted);
+}
+
+.message-list h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}

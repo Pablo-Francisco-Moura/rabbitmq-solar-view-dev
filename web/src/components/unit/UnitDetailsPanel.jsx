@@ -1,4 +1,5 @@
 import AccordionSection from "./AccordionSection.jsx";
+import "../../css/units-details.css";
 
 const UNIDADE_SUMMARY_FIELDS = [
   "unidadeId",

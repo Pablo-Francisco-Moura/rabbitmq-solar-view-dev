@@ -1,0 +1,52 @@
+.queue-card {
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.queue-card:hover {
+  border-color: var(--accent);
+}
+
+.queue-card--active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.queue-card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+
+.queue-card__label {
+  font-weight: 600;
+}
+
+.queue-card__name {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.queue-card dl {
+  display: flex;
+  gap: 20px;
+  margin: 0;
+}
+
+.queue-card dt {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.queue-card dd {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 600;
+}

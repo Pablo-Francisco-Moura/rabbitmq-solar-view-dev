@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import "../css/json-field-list.css";
 
 function formatFieldValue(value) {
   if (value === null || value === undefined) return "";

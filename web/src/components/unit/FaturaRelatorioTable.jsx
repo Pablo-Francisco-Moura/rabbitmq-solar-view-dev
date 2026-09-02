@@ -7,6 +7,9 @@ import {
   orderRelatorioColumns,
   relatorioColumnLabel,
 } from "../../utils/unit/relatorioHelpers.js";
+import "../../css/units-details.css";
+import "../../css/units-relatorio.css";
+import "../../css/table.css";
 
 export default function FaturaRelatorioTable({ relatorio, onOpenPdf }) {
   const [relatorioSortColumn, setRelatorioSortColumn] = useState(

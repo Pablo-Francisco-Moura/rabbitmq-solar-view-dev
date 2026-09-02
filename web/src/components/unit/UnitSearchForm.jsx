@@ -1,4 +1,5 @@
 import { parseSearchIds, parseSearchNomes } from "../../unidadeIds.js";
+import "../../css/units-search.css";
 
 export default function UnitSearchForm({
   searchText,

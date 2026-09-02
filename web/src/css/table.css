@@ -1,0 +1,33 @@
+.table-scroll {
+  overflow-x: auto;
+}
+
+.table-scroll table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.table-scroll th,
+.table-scroll td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.table-scroll th {
+  background: #0f1115;
+  color: var(--muted);
+  position: sticky;
+  top: 0;
+}
+
+.table-scroll th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.table-scroll th.sortable:hover,
+.table-scroll th.sortable--active {
+  color: var(--accent);
+}

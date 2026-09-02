@@ -1,0 +1,73 @@
+.json-field-list {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.json-field {
+  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 4px 2px 22px;
+  border-radius: 4px;
+}
+
+.json-field:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.json-field__copy {
+  position: absolute;
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.json-field:hover .json-field__copy {
+  opacity: 1;
+}
+
+.json-field__copy:hover {
+  color: var(--accent);
+}
+
+.json-field__key {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.json-field__value {
+  word-break: break-word;
+}
+
+.json-field__tooltip {
+  position: absolute;
+  left: 2px;
+  bottom: 100%;
+  margin-bottom: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 0.68rem;
+  padding: 3px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  z-index: 5;
+}

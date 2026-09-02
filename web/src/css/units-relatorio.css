@@ -1,0 +1,29 @@
+.units-relatorio {
+  margin-top: 20px;
+}
+
+.units-relatorio__missing {
+  color: var(--error);
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-left: 12px;
+}
+
+.units-relatorio__toggle {
+  margin-top: 10px;
+  margin-right: 8px;
+}
+
+.units-relatorio__pdf-link {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.units-relatorio__pdf-link:hover {
+  border-color: var(--accent);
+}

@@ -1,0 +1,126 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  --bg: #0f1115;
+  --panel: #171a21;
+  --border: #2a2f3a;
+  --text: #e6e8eb;
+  --muted: #8b93a1;
+  --accent: #f2a900;
+  --ok: #35c26b;
+  --error: #e5534b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+
+.app__nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.app__nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.app__nav a.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.app__header h1 {
+  margin: 0 0 4px;
+}
+
+.app__header p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.app__concessionaria {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.app__error {
+  background: rgba(229, 83, 75, 0.15);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.app__grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.6fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .app__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.app__grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.queue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+button {
+  background: var(--accent);
+  border: none;
+  border-radius: 6px;
+  color: #14161b;
+  font-weight: 600;
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.status--ok {
+  color: var(--ok);
+}
+
+.status--error {
+  color: var(--error);
+}

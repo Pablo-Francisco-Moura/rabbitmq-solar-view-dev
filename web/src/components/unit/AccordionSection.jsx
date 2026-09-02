@@ -1,4 +1,5 @@
 import JsonFieldList from "../JsonFieldList.jsx";
+import "../../css/accordion-section.css";
 
 function orderFields(object, priorityFields) {
   const keys = Object.keys(object);

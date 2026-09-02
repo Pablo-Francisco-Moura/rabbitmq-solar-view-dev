@@ -7,6 +7,8 @@ import {
   padEndNbsp,
   padStartNbsp,
 } from "../../utils/unit/summaryClipboard.js";
+import "../../css/units-details.css";
+import "../../css/units-summary.css";
 
 export default function FaturasAusentesSummary({ foundIds, resultsById }) {
   const [copied, setCopied] = useState(false);

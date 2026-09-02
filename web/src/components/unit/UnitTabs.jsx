@@ -1,3 +1,5 @@
+import "../../css/units-tabs.css";
+
 export default function UnitTabs({
   foundIds,
   selectedId,

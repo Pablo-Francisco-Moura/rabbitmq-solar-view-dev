@@ -1,0 +1,17 @@
+.accordion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+
+.accordion-header:hover h2 {
+  color: var(--accent);
+}
+
+.accordion-toggle {
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}

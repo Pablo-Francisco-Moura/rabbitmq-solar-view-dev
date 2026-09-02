@@ -1,0 +1,49 @@
+.publish-form {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.publish-form h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+}
+
+.publish-form__row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.publish-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  flex: 1;
+}
+
+.publish-form select,
+.publish-form input,
+.publish-form textarea {
+  background: #0f1115;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px;
+  font-family: inherit;
+}
+
+.publish-form textarea {
+  font-family: "Fira Code", monospace;
+  font-size: 0.8rem;
+}
+
+.publish-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getUnidadePayload } from "../api/unidades.js";
 import { parseUnidadeIds } from "../unidadeIds.js";
+import "../css/publish-form.css";
 
 function buildEmptyPayload(concessionaria) {
   return {
