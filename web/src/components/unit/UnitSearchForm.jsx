@@ -1,0 +1,55 @@
+import { parseSearchIds, parseSearchNomes } from "../../unidadeIds.js";
+
+export default function UnitSearchForm({
+  searchText,
+  onSearchTextChange,
+  onSubmit,
+  loading,
+  fetchDone,
+  fetchTotal,
+  onCancel,
+}) {
+  return (
+    <form className="units-search" onSubmit={onSubmit}>
+      <label>
+        Unidade ID (uma ou várias, separadas por espaço, vírgula ou linha) ou
+        nome da unidade entre aspas duplas — pode misturar os dois
+        <textarea
+          rows={5}
+          placeholder={
+            'Ex: 712383\nou várias:\n466422\n935969\n935970\nou por nome:\n"UFV Sirius"\nou misturado:\n928153\n"UFV"'
+          }
+          value={searchText}
+          onChange={(event) => onSearchTextChange(event.target.value)}
+        />
+      </label>
+      <div className="units-search__actions">
+        <button
+          type="submit"
+          disabled={
+            (parseSearchIds(searchText).length === 0 &&
+              parseSearchNomes(searchText).length === 0) ||
+            loading
+          }
+        >
+          {loading
+            ? fetchTotal > 0
+              ? `Buscando ${fetchDone}/${fetchTotal}…`
+              : "Buscando…"
+            : "Buscar"}
+        </button>
+        {loading && (
+          <button
+            type="button"
+            className="units-search__cancel"
+            onClick={onCancel}
+            aria-label="Cancelar busca"
+            title="Cancelar busca"
+          >
+            ×
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
