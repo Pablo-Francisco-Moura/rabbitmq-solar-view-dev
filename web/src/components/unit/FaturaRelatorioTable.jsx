@@ -6,7 +6,7 @@ import {
   getMissingMonths,
   orderRelatorioColumns,
   relatorioColumnLabel,
-} from "./relatorioHelpers.js";
+} from "../../utils/unit/relatorioHelpers.js";
 
 export default function FaturaRelatorioTable({ relatorio, onOpenPdf }) {
   const [relatorioSortColumn, setRelatorioSortColumn] = useState(

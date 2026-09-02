@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { getUnidadeStatus } from "./relatorioHelpers.js";
+import { getUnidadeStatus } from "../../utils/unit/relatorioHelpers.js";
 import {
   NBSP,
   buildSummaryHtml,
   buildSummaryPlainText,
   padEndNbsp,
   padStartNbsp,
-} from "./summaryClipboard.js";
+} from "../../utils/unit/summaryClipboard.js";
 
 export default function FaturasAusentesSummary({ foundIds, resultsById }) {
   const [copied, setCopied] = useState(false);
