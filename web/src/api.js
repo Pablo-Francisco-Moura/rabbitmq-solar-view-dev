@@ -24,6 +24,9 @@ export const getUnidadePayload = (unidadeId) =>
 export const getUnidadeDetails = (unidadeId) =>
   request(`/unidades/${encodeURIComponent(unidadeId)}`);
 
+export const searchUnidadesByNome = (nome) =>
+  request(`/unidades/busca?nome=${encodeURIComponent(nome)}`);
+
 export const updateUnidadeInstallationCodes = (unidadeId, codes) =>
   request(`/unidades/${encodeURIComponent(unidadeId)}/codigos-instalacao`, {
     method: "PATCH",
