@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import QueueCard from "../components/QueueCard.jsx";
 import MessageList from "../components/MessageList.jsx";
 import PublishForm from "../components/PublishForm.jsx";
+import { getConcessionarias } from "../api/concessionarias.js";
 import {
-  getConcessionarias,
   getQueues,
   getMessages,
   publishMessage,
   deleteMessage,
-} from "../api.js";
+} from "../api/queues.js";
 
 const POLL_INTERVAL_MS = 4000;
 const STORAGE_KEY = "rabbitmq-solar-view-dev:queues-page";

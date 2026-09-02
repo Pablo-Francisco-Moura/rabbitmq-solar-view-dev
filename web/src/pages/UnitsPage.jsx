@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { getGestaoScee, getUnidadeNomes } from "../api.js";
+import { getGestaoScee } from "../api/gestaoScee.js";
+import { getUnidadeNomes } from "../api/unidades.js";
 import { parseUnidadeIds } from "../unidadeIds.js";
 
 const STORAGE_KEY = "rabbitmq-solar-view-dev:units-page";

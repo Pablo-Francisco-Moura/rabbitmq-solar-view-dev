@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { getUnidadePayload } from "../api.js";
+import { getUnidadePayload } from "../api/unidades.js";
 import { parseUnidadeIds } from "../unidadeIds.js";
 
 function buildEmptyPayload(concessionaria) {

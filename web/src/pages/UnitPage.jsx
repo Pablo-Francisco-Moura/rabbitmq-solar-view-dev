@@ -3,7 +3,7 @@ import {
   getUnidadeDetails,
   updateUnidadeInstallationCodes,
   searchUnidadesByNome,
-} from "../api.js";
+} from "../api/unidades.js";
 import { parseSearchIds, parseSearchNomes } from "../unidadeIds.js";
 import UnitSearchForm from "../components/unit/UnitSearchForm.jsx";
 import UnitTabs from "../components/unit/UnitTabs.jsx";

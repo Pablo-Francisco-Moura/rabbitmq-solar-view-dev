@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { extractFatura } from "../../api.js";
+import { extractFatura } from "../../api/fatura.js";
 
 export default function FaturaPdfModal({ url, companyId, onClose }) {
   const [extracting, setExtracting] = useState(null);

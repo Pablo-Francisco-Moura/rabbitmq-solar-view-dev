@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getUnidadeNomes } from "../api.js";
+import { getUnidadeNomes } from "../api/unidades.js";
 
 function parsePayload(message) {
   if (message.payload == null) return null;
