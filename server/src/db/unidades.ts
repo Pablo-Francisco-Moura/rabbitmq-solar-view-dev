@@ -1,4 +1,4 @@
-import type { ResultSetHeader } from "mysql2/promise";
+import type { ResultSetHeader, RowDataPacket } from "mysql2/promise";
 import { getPool } from "./pool.js";
 import type {
   UnidadeJobPayloadRow,
@@ -162,6 +162,51 @@ export async function updateUnidadeInstallationCodes(
   );
 
   return getUnidadeDetails(unidadeId);
+}
+
+// Apaga uma fatura de faturaRelatorioEnergetico e, antes disso, os registros
+// de relatorioEnergetico vinculados a ela (fatura_faturaId), ja que essa FK e'
+// ON DELETE RESTRICT e bloquearia o delete direto. Roda em transacao pra nao
+// deixar filho apagado com pai intacto (ou vice-versa) se algo falhar no meio.
+export async function deleteFaturaRelatorio(
+  unidadeId: number,
+  faturaId: number,
+): Promise<void> {
+  const db = getPool();
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [faturaRows] = await connection.query<RowDataPacket[]>(
+      `SELECT faturaId FROM faturaRelatorioEnergetico WHERE faturaId = ? AND unidade_unidadeId = ?`,
+      [faturaId, unidadeId],
+    );
+    if (faturaRows.length === 0)
+      throw new Error(
+        `Fatura ${faturaId} nao encontrada para a unidade ${unidadeId}.`,
+      );
+
+    await connection.query(
+      `DELETE FROM relatorioEnergetico WHERE fatura_faturaId = ?`,
+      [faturaId],
+    );
+
+    const [result] = await connection.query<ResultSetHeader>(
+      `DELETE FROM faturaRelatorioEnergetico WHERE faturaId = ? AND unidade_unidadeId = ?`,
+      [faturaId, unidadeId],
+    );
+    if (result.affectedRows === 0)
+      throw new Error(
+        `Fatura ${faturaId} nao encontrada para a unidade ${unidadeId}.`,
+      );
+
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 // Usado so para exibicao (titulo da mensagem na UI) — nunca entra no payload do job.

@@ -53,6 +53,7 @@ export interface FaturaCredencialRow extends RowDataPacket {
 }
 
 export interface FaturaRelatorioEnergeticoRow extends RowDataPacket {
+  faturaId: number;
   unidade_unidadeId: number;
   faturaMesReferencia: string;
   [column: string]: unknown;
