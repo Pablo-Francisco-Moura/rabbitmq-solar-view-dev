@@ -34,6 +34,10 @@ export interface UnidadeDetails {
   faturaRelatorioEnergetico: FaturaRelatorioRow[];
   concessionaria: ConcessionariaRow | null;
   integrador: Record<string, unknown> | null;
+  unidadeTerceira: Record<string, unknown> | null;
+  credencialUsina: Record<string, unknown> | null;
+  portal: Record<string, unknown> | null;
+  credencialStatus: Record<string, unknown> | null;
 }
 
 export interface UnidadeNome {

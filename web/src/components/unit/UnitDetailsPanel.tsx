@@ -32,12 +32,33 @@ const CREDENCIAL_SUMMARY_FIELDS = [
   "flagExcluida",
 ];
 const CONCESSIONARIA_SUMMARY_FIELDS = ["concessionariaId", "nomeConcessionaria"];
+const UNIDADE_TERCEIRA_SUMMARY_FIELDS = [
+  "unidadesTerceirasId",
+  "unidadesTerceiras_unidadeIdTerceira",
+  "monitorada",
+];
+const CREDENCIAL_USINA_SUMMARY_FIELDS = [
+  "credencialId",
+  "userName",
+  "password",
+  "credencialAtiva",
+  "flagExcluida",
+];
+const PORTAL_SUMMARY_FIELDS = ["portalId", "portalNome", "portalAtivo", "portalUrl"];
+const CREDENCIAL_STATUS_SUMMARY_FIELDS = [
+  "statusIntegracaoNome",
+  "statusIntegracaoID",
+];
 const INTEGRADOR_SUMMARY_FIELDS = ["usuarioId", "usuNome", "usuEmail"];
 
 export interface ExpandedSections {
   unidade: boolean;
   faturaCredencial: boolean;
   concessionaria: boolean;
+  unidadeTerceira: boolean;
+  credencialUsina: boolean;
+  portal: boolean;
+  credencialStatus: boolean;
   integrador: boolean;
 }
 
@@ -75,6 +96,42 @@ export default function UnitDetailsPanel({ details, expandedSections, onToggleSe
         expanded={expandedSections.concessionaria}
         onToggle={() => onToggleSection("concessionaria")}
         emptyMessage="Nenhuma concessionária encontrada para esta unidade."
+      />
+
+      <AccordionSection
+        title="Unidade (Terceira)"
+        data={details.unidadeTerceira}
+        summaryFields={UNIDADE_TERCEIRA_SUMMARY_FIELDS}
+        expanded={expandedSections.unidadeTerceira}
+        onToggle={() => onToggleSection("unidadeTerceira")}
+        emptyMessage="Nenhuma unidade terceira encontrada para esta unidade."
+      />
+
+      <AccordionSection
+        title="Portal"
+        data={details.portal}
+        summaryFields={PORTAL_SUMMARY_FIELDS}
+        expanded={expandedSections.portal}
+        onToggle={() => onToggleSection("portal")}
+        emptyMessage="Nenhum portal encontrado para esta credencial de usina."
+      />
+
+      <AccordionSection
+        title="Credencial (Usina)"
+        data={details.credencialUsina}
+        summaryFields={CREDENCIAL_USINA_SUMMARY_FIELDS}
+        expanded={expandedSections.credencialUsina}
+        onToggle={() => onToggleSection("credencialUsina")}
+        emptyMessage="Nenhuma credencial de usina encontrada para esta unidade."
+      />
+
+      <AccordionSection
+        title="Credencial (Status)"
+        data={details.credencialStatus}
+        summaryFields={CREDENCIAL_STATUS_SUMMARY_FIELDS}
+        expanded={expandedSections.credencialStatus}
+        onToggle={() => onToggleSection("credencialStatus")}
+        emptyMessage="Nenhum status de integração encontrado para esta credencial de usina."
       />
 
       <AccordionSection

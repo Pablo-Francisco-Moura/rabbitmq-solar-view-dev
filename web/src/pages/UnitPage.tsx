@@ -73,6 +73,10 @@ export default function UnitPage() {
     unidade: false,
     faturaCredencial: false,
     concessionaria: false,
+    unidadeTerceira: false,
+    credencialUsina: false,
+    portal: false,
+    credencialStatus: false,
     integrador: false,
   });
   const [pdfModalUrl, setPdfModalUrl] = useState<string | null>(null);
@@ -118,6 +122,10 @@ export default function UnitPage() {
       unidade: false,
       faturaCredencial: false,
       concessionaria: false,
+      unidadeTerceira: false,
+      credencialUsina: false,
+      portal: false,
+      credencialStatus: false,
       integrador: false,
     });
   }
