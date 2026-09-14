@@ -2,6 +2,7 @@ import { NavLink, Navigate, Route, Routes } from "react-router-dom";
 import QueuesPage from "./pages/QueuesPage.js";
 import UnitPage from "./pages/UnitPage.js";
 import UnitsPage from "./pages/UnitsPage.js";
+import PortaisPage from "./pages/PortaisPage.js";
 
 export default function App() {
   return (
@@ -25,6 +26,12 @@ export default function App() {
         >
           Units
         </NavLink>
+        <NavLink
+          to="/portais"
+          className={({ isActive }) => (isActive ? "active" : "")}
+        >
+          Portais
+        </NavLink>
       </nav>
 
       <Routes>
@@ -32,6 +39,7 @@ export default function App() {
         <Route path="/queues" element={<QueuesPage />} />
         <Route path="/unit" element={<UnitPage />} />
         <Route path="/units" element={<UnitsPage />} />
+        <Route path="/portais" element={<PortaisPage />} />
       </Routes>
     </div>
   );
