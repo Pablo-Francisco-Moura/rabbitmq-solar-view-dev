@@ -6,8 +6,6 @@ import type { UnidadeDetails } from "../../types/unidades.js";
 const UNIDADE_SUMMARY_FIELDS = [
   "unidadeId",
   "uniNome",
-  "uniIntegradorResponsavel",
-  "concessionaria_concessionariaId",
   "faturaCodigoInstalacao",
   "faturaNewCodigoInstalacao",
   "uniAtiva",
@@ -15,9 +13,6 @@ const UNIDADE_SUMMARY_FIELDS = [
 ];
 const CREDENCIAL_SUMMARY_FIELDS = [
   "faturaCredencialId",
-  "unidade_unidadeId",
-  "usuario_usuarioId",
-  "concessionaria_concessionariaId",
   "user",
   "password",
   "faturaCodigoInstalacao",
@@ -49,7 +44,7 @@ const CREDENCIAL_STATUS_SUMMARY_FIELDS = [
   "statusIntegracaoNome",
   "statusIntegracaoID",
 ];
-const INTEGRADOR_SUMMARY_FIELDS = ["usuarioId", "usuNome", "usuEmail"];
+const INTEGRADOR_SUMMARY_FIELDS = ["usuEmail"];
 
 export interface ExpandedSections {
   unidade: boolean;
