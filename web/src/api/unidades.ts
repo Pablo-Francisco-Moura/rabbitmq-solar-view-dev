@@ -31,3 +31,9 @@ export const updateUnidadeInstallationCodes = (
       body: JSON.stringify(codes),
     },
   );
+
+export const deleteFaturaRelatorio = (unidadeId: number, faturaId: number) =>
+  request<{ ok: boolean }>(
+    `/unidades/${encodeURIComponent(unidadeId)}/fatura-relatorio/${encodeURIComponent(faturaId)}`,
+    { method: "DELETE" },
+  );

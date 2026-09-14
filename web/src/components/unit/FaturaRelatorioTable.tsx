@@ -15,13 +15,31 @@ import type { FaturaRelatorioRow } from "../../types/unidades.js";
 interface FaturaRelatorioTableProps {
   relatorio: FaturaRelatorioRow[];
   onOpenPdf: (url: string) => void;
+  onDelete: (faturaId: number) => Promise<void>;
 }
 
-export default function FaturaRelatorioTable({ relatorio, onOpenPdf }: FaturaRelatorioTableProps) {
+export default function FaturaRelatorioTable({ relatorio, onOpenPdf, onDelete }: FaturaRelatorioTableProps) {
   const [relatorioSortColumn, setRelatorioSortColumn] = useState(
     "faturaMesReferencia",
   );
   const [showAllRelatorio, setShowAllRelatorio] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  async function handleDelete(faturaId: number, mesReferencia?: string) {
+    if (
+      !window.confirm(
+        `Excluir a fatura ${faturaId}${mesReferencia ? ` (${mesReferencia})` : ""} de faturaRelatorioEnergetico?\n\n` +
+          `Isso também apaga os registros vinculados em relatorioEnergetico. Essa ação não pode ser desfeita.`,
+      )
+    )
+      return;
+    setDeletingId(faturaId);
+    try {
+      await onDelete(faturaId);
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   const relatorioColumns = relatorio.length
     ? [
@@ -78,6 +96,7 @@ export default function FaturaRelatorioTable({ relatorio, onOpenPdf }: FaturaRel
                     </th>
                   );
                 })}
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -106,6 +125,21 @@ export default function FaturaRelatorioTable({ relatorio, onOpenPdf }: FaturaRel
                     }
                     return <td key={column}>{String(value ?? "")}</td>;
                   })}
+                  <td>
+                    {row.faturaId != null && (
+                      <button
+                        type="button"
+                        className="units-relatorio__delete"
+                        title={`Excluir fatura ${row.faturaId}`}
+                        disabled={deletingId === row.faturaId}
+                        onClick={() =>
+                          handleDelete(row.faturaId as number, row.faturaMesReferencia)
+                        }
+                      >
+                        {deletingId === row.faturaId ? "…" : "🗑"}
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

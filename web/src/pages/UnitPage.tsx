@@ -3,6 +3,7 @@ import {
   getUnidadeDetails,
   updateUnidadeInstallationCodes,
   searchUnidadesByNome,
+  deleteFaturaRelatorio,
 } from "../api/unidades.js";
 import { parseSearchIds, parseSearchNomes } from "../utils/unidadeIds.js";
 import UnitSearchForm from "../components/unit/UnitSearchForm.js";
@@ -269,6 +270,30 @@ export default function UnitPage() {
     }
   }
 
+  async function handleDeleteFaturaRelatorio(faturaId: number) {
+    if (selectedId == null || !resultsById[selectedId]) return;
+    setError(null);
+    try {
+      await deleteFaturaRelatorio(selectedId, faturaId);
+      setResultsById((current) => {
+        const currentDetails = current[selectedId];
+        if (!currentDetails) return current;
+        return {
+          ...current,
+          [selectedId]: {
+            ...currentDetails,
+            faturaRelatorioEnergetico:
+              currentDetails.faturaRelatorioEnergetico.filter(
+                (row) => row.faturaId !== faturaId,
+              ),
+          },
+        };
+      });
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   const details = selectedId != null ? resultsById[selectedId] : null;
   const relatorio = details?.faturaRelatorioEnergetico ?? [];
 
@@ -324,7 +349,11 @@ export default function UnitPage() {
             </div>
           </div>
 
-          <FaturaRelatorioTable relatorio={relatorio} onOpenPdf={setPdfModalUrl} />
+          <FaturaRelatorioTable
+            relatorio={relatorio}
+            onOpenPdf={setPdfModalUrl}
+            onDelete={handleDeleteFaturaRelatorio}
+          />
         </>
       )}
 

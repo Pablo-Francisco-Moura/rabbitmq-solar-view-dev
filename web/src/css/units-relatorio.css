@@ -27,3 +27,25 @@
 .units-relatorio__pdf-link:hover {
   border-color: var(--accent);
 }
+
+.units-relatorio__delete {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.9rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.units-relatorio__delete:hover {
+  background: rgba(229, 83, 75, 0.15);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.units-relatorio__delete:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
