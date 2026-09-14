@@ -31,6 +31,7 @@ interface AccordionSectionProps {
   expanded: boolean;
   onToggle: () => void;
   emptyMessage: string;
+  renderAction?: (key: string, value: unknown) => React.ReactNode;
 }
 
 export default function AccordionSection({
@@ -40,6 +41,7 @@ export default function AccordionSection({
   expanded,
   onToggle,
   emptyMessage,
+  renderAction,
 }: AccordionSectionProps) {
   return (
     <>
@@ -56,6 +58,7 @@ export default function AccordionSection({
           data={
             expanded ? orderFields(data, summaryFields) : pickFields(data, summaryFields)
           }
+          renderAction={renderAction}
         />
       ) : (
         <p>{emptyMessage}</p>

@@ -1,4 +1,5 @@
 import AccordionSection from "./AccordionSection.js";
+import AcessarIntegradorButton from "./AcessarIntegradorButton.js";
 import "../../css/units-details.css";
 import type { UnidadeDetails } from "../../types/unidades.js";
 
@@ -83,6 +84,18 @@ export default function UnitDetailsPanel({ details, expandedSections, onToggleSe
         expanded={expandedSections.integrador}
         onToggle={() => onToggleSection("integrador")}
         emptyMessage="Nenhum integrador encontrado para esta unidade."
+        renderAction={(key, value) => {
+          if (key !== "usuEmail" || !details.integrador) return null;
+          const usuarioId = Number(details.integrador.usuarioId);
+          if (!Number.isInteger(usuarioId) || usuarioId <= 0) return null;
+          return (
+            <AcessarIntegradorButton
+              usuarioId={usuarioId}
+              usuNome={String(details.integrador.usuNome ?? "")}
+              usuEmail={String(value ?? "")}
+            />
+          );
+        }}
       />
     </section>
   );

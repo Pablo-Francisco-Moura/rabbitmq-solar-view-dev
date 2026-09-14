@@ -27,9 +27,10 @@ function CopyIcon() {
 interface CopyableFieldProps {
   label: string;
   value: unknown;
+  action?: React.ReactNode;
 }
 
-function CopyableField({ label, value }: CopyableFieldProps) {
+function CopyableField({ label, value, action }: CopyableFieldProps) {
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [copied, setCopied] = useState(false);
   const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -70,6 +71,7 @@ function CopyableField({ label, value }: CopyableFieldProps) {
       </button>
       <span className="json-field__key">{label}:</span>
       <span className="json-field__value">{formatFieldValue(value)}</span>
+      {action}
       {tooltipVisible && !copied && (
         <span className="json-field__tooltip">Copiar {label}</span>
       )}
@@ -79,13 +81,19 @@ function CopyableField({ label, value }: CopyableFieldProps) {
 
 interface JsonFieldListProps {
   data: Record<string, unknown>;
+  renderAction?: (key: string, value: unknown) => React.ReactNode;
 }
 
-export default function JsonFieldList({ data }: JsonFieldListProps) {
+export default function JsonFieldList({ data, renderAction }: JsonFieldListProps) {
   return (
     <div className="json-field-list">
       {Object.entries(data).map(([key, value]) => (
-        <CopyableField key={key} label={key} value={value} />
+        <CopyableField
+          key={key}
+          label={key}
+          value={value}
+          action={renderAction?.(key, value)}
+        />
       ))}
     </div>
   );
