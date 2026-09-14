@@ -1,7 +1,54 @@
 import AccordionSection from "./AccordionSection.js";
 import AcessarIntegradorButton from "./AcessarIntegradorButton.js";
+import FieldWarningIcon from "./FieldWarningIcon.js";
+import NavegarButton from "./NavegarButton.js";
 import "../../css/units-details.css";
 import type { UnidadeDetails } from "../../types/unidades.js";
+
+interface FlagWarningRule {
+  when: (value: unknown) => boolean;
+  message: string;
+}
+
+function flagWarningAction(
+  rules: Record<string, FlagWarningRule>,
+): (key: string, value: unknown) => React.ReactNode {
+  return (key, value) => {
+    const rule = rules[key];
+    if (!rule || !rule.when(value)) return null;
+    return <FieldWarningIcon message={rule.message} />;
+  };
+}
+
+function isFlag(value: unknown, expected: number): boolean {
+  return value != null && Number(value) === expected;
+}
+
+const UNIDADE_FIELD_ACTIONS = flagWarningAction({
+  uniAtiva: { when: (v) => isFlag(v, 0), message: "Unidade inativa" },
+  uniExcluida: { when: (v) => isFlag(v, 1), message: "Unidade excluída" },
+});
+
+const CREDENCIAL_FIELD_ACTIONS = flagWarningAction({
+  credencialAtiva: { when: (v) => isFlag(v, 0), message: "Credencial inativa" },
+  flagExcluida: { when: (v) => isFlag(v, 1), message: "Credencial excluída" },
+});
+
+const CREDENCIAL_USINA_FIELD_ACTIONS = flagWarningAction({
+  credencialAtiva: {
+    when: (v) => isFlag(v, 0),
+    message: "Credencial de usina inativa",
+  },
+  flagExcluida: {
+    when: (v) => isFlag(v, 1),
+    message: "Credencial de usina excluída",
+  },
+});
+
+function portalFieldAction(key: string, value: unknown): React.ReactNode {
+  if (key !== "portalUrl" || !value) return null;
+  return <NavegarButton url={String(value)} />;
+}
 
 const UNIDADE_SUMMARY_FIELDS = [
   "unidadeId",
@@ -73,6 +120,7 @@ export default function UnitDetailsPanel({ details, expandedSections, onToggleSe
         expanded={expandedSections.unidade}
         onToggle={() => onToggleSection("unidade")}
         emptyMessage="Nenhuma unidade encontrada."
+        renderAction={UNIDADE_FIELD_ACTIONS}
       />
 
       <AccordionSection
@@ -82,6 +130,7 @@ export default function UnitDetailsPanel({ details, expandedSections, onToggleSe
         expanded={expandedSections.faturaCredencial}
         onToggle={() => onToggleSection("faturaCredencial")}
         emptyMessage="Nenhuma faturaCredencial encontrada para esta unidade."
+        renderAction={CREDENCIAL_FIELD_ACTIONS}
       />
 
       <AccordionSection
@@ -109,6 +158,7 @@ export default function UnitDetailsPanel({ details, expandedSections, onToggleSe
         expanded={expandedSections.portal}
         onToggle={() => onToggleSection("portal")}
         emptyMessage="Nenhum portal encontrado para esta credencial de usina."
+        renderAction={portalFieldAction}
       />
 
       <AccordionSection
@@ -118,6 +168,7 @@ export default function UnitDetailsPanel({ details, expandedSections, onToggleSe
         expanded={expandedSections.credencialUsina}
         onToggle={() => onToggleSection("credencialUsina")}
         emptyMessage="Nenhuma credencial de usina encontrada para esta unidade."
+        renderAction={CREDENCIAL_USINA_FIELD_ACTIONS}
       />
 
       <AccordionSection
