@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  MISSING_MONTHS_WINDOW,
   RELATORIO_VISIBLE_ROWS,
   SORTABLE_RELATORIO_COLUMNS,
   formatMonthLabel,
@@ -64,8 +65,11 @@ export default function FaturaRelatorioTable({ relatorio, onOpenPdf, onDelete }:
         Fatura Relatório Energético
         {missingMonths.length > 0 && (
           <span className="units-relatorio__missing">
-            Meses ausentes (últimos 12):{" "}
-            {missingMonths.map(formatMonthLabel).join(" - ")}
+            {missingMonths.length === MISSING_MONTHS_WINDOW
+              ? `Nenhuma fatura recebida nos últimos ${MISSING_MONTHS_WINDOW} meses`
+              : `Meses ausentes (últimos ${MISSING_MONTHS_WINDOW}): ${missingMonths
+                  .map(formatMonthLabel)
+                  .join(" - ")}`}
           </span>
         )}
       </h2>

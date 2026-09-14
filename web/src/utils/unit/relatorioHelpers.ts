@@ -14,6 +14,7 @@ export const SORTABLE_RELATORIO_COLUMNS = [
   "faturaDataReferencia",
 ];
 export const RELATORIO_VISIBLE_ROWS = 12;
+export const MISSING_MONTHS_WINDOW = 12;
 
 export function orderRelatorioColumns(sampleRow: FaturaRelatorioRow): string[] {
   const keys = Object.keys(sampleRow);
@@ -53,7 +54,7 @@ export function getMissingMonths(relatorio: FaturaRelatorioRow[]): string[] {
     if (row.faturaDataReferencia)
       present.add(String(row.faturaDataReferencia).slice(0, 7));
   }
-  return getLastNMonths(12)
+  return getLastNMonths(MISSING_MONTHS_WINDOW)
     .filter((month) => !present.has(month))
     .reverse();
 }
@@ -115,6 +116,11 @@ export function getUnidadeStatus(relatorio: FaturaRelatorioRow[]): UnidadeStatus
       tone: overdue ? "warning" : "neutral",
     };
   }
+  if (missing.length === MISSING_MONTHS_WINDOW)
+    return {
+      label: `Nenhuma fatura recebida (últimos ${MISSING_MONTHS_WINDOW} meses)`,
+      tone: "error",
+    };
   return {
     label: missing.map(formatMonthLabel).join(" - "),
     tone: "error",
