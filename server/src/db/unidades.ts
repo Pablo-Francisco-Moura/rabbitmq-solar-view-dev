@@ -9,10 +9,14 @@ import type {
   FaturaRelatorioEnergeticoRow,
   ConcessionariaRow,
   UsuarioRow,
+  UnidadeTerceiraRow,
+  CredencialRow,
+  StatusIntegracaoRow,
   UnidadeJobPayload,
   UnidadeDetails,
   InstallationCodesUpdate,
 } from "../types/unidades.js";
+import type { PortalRow } from "../types/portais.js";
 
 // Espelha o job publicado hoje manualmente nas filas idc_*: dado o unidadeId,
 // busca fatura credencial + unidade e resolve o integradorId via
@@ -132,12 +136,49 @@ export async function getUnidadeDetails(
     integrador = integradorRows[0] || null;
   }
 
+  const [unidadeTerceiraRows] = await db.query<UnidadeTerceiraRow[]>(
+    `SELECT * FROM unidadesTerceiras WHERE unidadesTerceiras_unidadeId = ?`,
+    [unidadeId],
+  );
+  const unidadeTerceira = unidadeTerceiraRows[0] || null;
+
+  let credencialUsina: CredencialRow | null = null;
+  if (unidadeTerceira?.unidadesTerceiras_credencialId != null) {
+    const [credencialUsinaRows] = await db.query<CredencialRow[]>(
+      `SELECT * FROM credencial WHERE credencialId = ?`,
+      [unidadeTerceira.unidadesTerceiras_credencialId],
+    );
+    credencialUsina = credencialUsinaRows[0] || null;
+  }
+
+  let portal: PortalRow | null = null;
+  if (credencialUsina?.portal_portalId != null) {
+    const [portalRows] = await db.query<PortalRow[]>(
+      `SELECT * FROM portal WHERE portalId = ?`,
+      [credencialUsina.portal_portalId],
+    );
+    portal = portalRows[0] || null;
+  }
+
+  let credencialStatus: StatusIntegracaoRow | null = null;
+  if (credencialUsina?.status_statusIntegracaoInt != null) {
+    const [statusRows] = await db.query<StatusIntegracaoRow[]>(
+      `SELECT * FROM statusIntegracao WHERE statusIntegracaoID = ?`,
+      [credencialUsina.status_statusIntegracaoInt],
+    );
+    credencialStatus = statusRows[0] || null;
+  }
+
   return {
     unidade,
     faturaCredencial: credencialRows[0] || null,
     faturaRelatorioEnergetico: relatorioRows,
     concessionaria,
     integrador,
+    unidadeTerceira,
+    credencialUsina,
+    portal,
+    credencialStatus,
   };
 }
 

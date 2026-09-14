@@ -1,4 +1,5 @@
 import type { RowDataPacket } from "mysql2/promise";
+import type { PortalRow } from "./portais.js";
 
 // Colunas explicitamente selecionadas (SELECT col1, col2, ...): a linha tem
 // exatamente esses campos, nada mais.
@@ -69,6 +70,26 @@ export interface UsuarioRow extends RowDataPacket {
   [column: string]: unknown;
 }
 
+export interface UnidadeTerceiraRow extends RowDataPacket {
+  unidadesTerceirasId: number;
+  unidadesTerceiras_unidadeId: number | null;
+  unidadesTerceiras_credencialId: number | null;
+  [column: string]: unknown;
+}
+
+export interface CredencialRow extends RowDataPacket {
+  credencialId: number;
+  portal_portalId: number | null;
+  status_statusIntegracaoInt: number | null;
+  [column: string]: unknown;
+}
+
+export interface StatusIntegracaoRow extends RowDataPacket {
+  statusIntegracaoID: number;
+  statusIntegracaoNome: string | null;
+  statusIntegracaoDescricao: string | null;
+}
+
 // Formas retornadas pelas funcoes de db/unidades.ts (nao mapeiam 1:1 pra uma linha).
 
 export interface UnidadeJobPayload {
@@ -104,6 +125,10 @@ export interface UnidadeDetails {
   faturaRelatorioEnergetico: FaturaRelatorioEnergeticoRow[];
   concessionaria: ConcessionariaRow | null;
   integrador: UsuarioRow | null;
+  unidadeTerceira: UnidadeTerceiraRow | null;
+  credencialUsina: CredencialRow | null;
+  portal: PortalRow | null;
+  credencialStatus: StatusIntegracaoRow | null;
 }
 
 export interface InstallationCodesUpdate {
