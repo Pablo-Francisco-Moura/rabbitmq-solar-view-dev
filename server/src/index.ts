@@ -6,6 +6,7 @@ import unidadesRoutes from "./routes/unidades.js";
 import gestaoSceeRoutes from "./routes/gestaoScee.js";
 import extractRoutes from "./routes/extract.js";
 import portaisRoutes from "./routes/portais.js";
+import suporteL2Routes from "./routes/suporteL2.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -19,6 +20,7 @@ app.use(unidadesRoutes);
 app.use(gestaoSceeRoutes);
 app.use(extractRoutes);
 app.use(portaisRoutes);
+app.use(suporteL2Routes);
 
 app.listen(port, () =>
   console.log(`RabbitMQ Solar View Dev API ouvindo em :${port}`),
