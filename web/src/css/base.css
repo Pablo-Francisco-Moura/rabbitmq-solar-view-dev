@@ -22,7 +22,7 @@ body {
 }
 
 .app {
-  max-width: 1400px;
+  max-width: 2000px;
   margin: 0 auto;
   padding: 24px 16px 64px;
 }
@@ -77,7 +77,7 @@ body {
 
 .app__grid {
   display: grid;
-  grid-template-columns: 0.9fr 1.6fr;
+  grid-template-columns: 1.4fr 1.6fr;
   gap: 20px;
   align-items: start;
 }
