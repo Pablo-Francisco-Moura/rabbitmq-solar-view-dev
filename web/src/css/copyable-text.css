@@ -1,0 +1,17 @@
+.copyable-text {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: underline dotted transparent;
+  white-space: nowrap;
+}
+
+.copyable-text:hover {
+  color: var(--accent);
+  text-decoration-color: var(--accent);
+}
