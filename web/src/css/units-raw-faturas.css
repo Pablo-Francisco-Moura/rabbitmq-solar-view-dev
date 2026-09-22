@@ -1,0 +1,66 @@
+.units-raw-faturas {
+  margin-top: 20px;
+}
+
+.units-raw-faturas__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.units-raw-faturas__header h2 {
+  margin: 0;
+}
+
+.units-raw-faturas__hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin: 6px 0 10px;
+}
+
+.units-raw-faturas__status {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.units-raw-faturas__status--ok {
+  color: var(--ok);
+}
+
+.units-raw-faturas__status--warning {
+  color: var(--accent);
+}
+
+.units-raw-faturas__status--error {
+  color: var(--error);
+}
+
+.units-raw-faturas__erro {
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--error);
+}
+
+.units-raw-faturas__unlock {
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.units-raw-faturas__unlock:hover {
+  background: rgba(242, 169, 0, 0.15);
+}
+
+.units-raw-faturas__unlock:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

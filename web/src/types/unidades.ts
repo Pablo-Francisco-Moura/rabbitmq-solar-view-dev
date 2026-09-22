@@ -28,10 +28,31 @@ export interface FaturaRelatorioRow {
   [column: string]: unknown;
 }
 
+// raw_faturas (prod_monitors_system3): fatura ja baixada pro S3 pelo crawler.
+// Pode existir aqui sem nunca virar uma linha em faturaRelatorioEnergetico
+// (fatura_id null) quando a extracao ainda nao rodou ou falhou.
+export interface RawFaturaRow {
+  id: number;
+  raw_coleta_id: number;
+  concessionaria_id: number;
+  unidade_id: number;
+  url: string;
+  data_referencia: string | null;
+  status: "pending" | "extracting" | "processing" | "done" | "error" | "skipped";
+  etapa: string | null;
+  tentativas: number;
+  erro_processamento: string | null;
+  fatura_id: number | null;
+  primeiro_visto_em: string;
+  ultimo_visto_em: string;
+  vezes_visto: number;
+}
+
 export interface UnidadeDetails {
   unidade: UnidadeRow;
   faturaCredencial: Record<string, unknown> | null;
   faturaRelatorioEnergetico: FaturaRelatorioRow[];
+  rawFaturas: RawFaturaRow[];
   concessionaria: ConcessionariaRow | null;
   integrador: Record<string, unknown> | null;
   unidadeTerceira: Record<string, unknown> | null;

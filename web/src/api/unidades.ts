@@ -4,6 +4,7 @@ import type {
   UnidadeJobPayload,
   UnidadeNome,
   InstallationCodesUpdate,
+  RawFaturaRow,
 } from "../types/unidades.js";
 
 export const getUnidadeNomes = (unidadeIds: number[]) =>
@@ -36,4 +37,10 @@ export const deleteFaturaRelatorio = (unidadeId: number, faturaId: number) =>
   request<{ ok: boolean }>(
     `/unidades/${encodeURIComponent(unidadeId)}/fatura-relatorio/${encodeURIComponent(faturaId)}`,
     { method: "DELETE" },
+  );
+
+export const unlockRawFatura = (unidadeId: number, rawFaturaId: number) =>
+  request<{ ok: boolean; rawFatura: RawFaturaRow }>(
+    `/unidades/${encodeURIComponent(unidadeId)}/raw-faturas/${encodeURIComponent(rawFaturaId)}/destravar`,
+    { method: "POST" },
   );

@@ -4,6 +4,7 @@ import {
   updateUnidadeInstallationCodes,
   searchUnidadesByNome,
   deleteFaturaRelatorio,
+  unlockRawFatura,
 } from "../api/unidades.js";
 import { parseSearchIds, parseSearchNomes } from "../utils/unidadeIds.js";
 import UnitSearchForm from "../components/unit/UnitSearchForm.js";
@@ -12,7 +13,9 @@ import UnitDetailsPanel from "../components/unit/UnitDetailsPanel.js";
 import type { ExpandedSections } from "../components/unit/UnitDetailsPanel.js";
 import InstallationCodesForm from "../components/unit/InstallationCodesForm.js";
 import FaturasAusentesSummary from "../components/unit/FaturasAusentesSummary.js";
+import FaturasComErrosSummary from "../components/unit/FaturasComErrosSummary.js";
 import FaturaRelatorioTable from "../components/unit/FaturaRelatorioTable.js";
+import RawFaturasTable from "../components/unit/RawFaturasTable.js";
 import FaturaPdfModal from "../components/unit/FaturaPdfModal.js";
 import type { UnidadeDetails } from "../types/unidades.js";
 
@@ -302,8 +305,30 @@ export default function UnitPage() {
     }
   }
 
+  async function handleUnlockRawFatura(rawFaturaId: number) {
+    if (selectedId == null || !resultsById[selectedId]) return;
+    const { rawFatura } = await unlockRawFatura(selectedId, rawFaturaId);
+    setResultsById((current) => {
+      const currentDetails = current[selectedId];
+      if (!currentDetails) return current;
+      return {
+        ...current,
+        [selectedId]: {
+          ...currentDetails,
+          rawFaturas: (currentDetails.rawFaturas ?? []).map((row) =>
+            row.id === rawFatura.id ? rawFatura : row,
+          ),
+        },
+      };
+    });
+  }
+
   const details = selectedId != null ? resultsById[selectedId] : null;
   const relatorio = details?.faturaRelatorioEnergetico ?? [];
+  // Cache antigo em localStorage (de antes dessa coluna existir) nao tem
+  // rawFaturas — sem esse fallback o RawFaturasTable recebe undefined e quebra
+  // a pagina inteira (sem error boundary).
+  const rawFaturas = details?.rawFaturas ?? [];
 
   return (
     <div>
@@ -354,6 +379,7 @@ export default function UnitPage() {
               />
 
               <FaturasAusentesSummary foundIds={foundIds} resultsById={resultsById} />
+              <FaturasComErrosSummary foundIds={foundIds} resultsById={resultsById} />
             </div>
           </div>
 
@@ -361,6 +387,12 @@ export default function UnitPage() {
             relatorio={relatorio}
             onOpenPdf={setPdfModalUrl}
             onDelete={handleDeleteFaturaRelatorio}
+          />
+
+          <RawFaturasTable
+            rawFaturas={rawFaturas}
+            onOpenPdf={setPdfModalUrl}
+            onUnlock={handleUnlockRawFatura}
           />
         </>
       )}
