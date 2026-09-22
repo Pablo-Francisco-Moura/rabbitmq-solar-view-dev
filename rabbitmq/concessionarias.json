@@ -16,5 +16,11 @@
     "id": "27",
     "queueIn": "idc_energisa_in",
     "queueOut": "idc_energisa_out"
+  },
+  {
+    "nome": "COPEL",
+    "id": "73",
+    "queueIn": "idc_copel_in",
+    "queueOut": "idc_copel_out"
   }
 ]
