@@ -6,6 +6,7 @@ import {
   updateUnidadeInstallationCodes,
   searchUnidadesByNome,
   deleteFaturaRelatorio,
+  unlockRawFatura,
 } from "../db/unidades.js";
 import type { InstallationCodesRequestBody } from "../types/unidades.js";
 
@@ -92,6 +93,26 @@ router.delete(
     try {
       await deleteFaturaRelatorio(unidadeId, faturaId);
       response.json({ ok: true });
+    } catch (error) {
+      const message = (error as Error).message;
+      const notFound = /nao encontrad/.test(message);
+      response.status(notFound ? 404 : 502).json({ error: message });
+    }
+  },
+);
+
+router.post(
+  "/api/unidades/:unidadeId/raw-faturas/:rawFaturaId/destravar",
+  async (request, response) => {
+    const unidadeId = Number(request.params.unidadeId);
+    const rawFaturaId = Number(request.params.rawFaturaId);
+    if (!Number.isInteger(unidadeId) || unidadeId <= 0)
+      return response.status(400).json({ error: "unidadeId invalido." });
+    if (!Number.isInteger(rawFaturaId) || rawFaturaId <= 0)
+      return response.status(400).json({ error: "rawFaturaId invalido." });
+    try {
+      const rawFatura = await unlockRawFatura(unidadeId, rawFaturaId);
+      response.json({ ok: true, rawFatura });
     } catch (error) {
       const message = (error as Error).message;
       const notFound = /nao encontrad/.test(message);

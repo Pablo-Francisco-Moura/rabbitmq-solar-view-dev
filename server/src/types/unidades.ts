@@ -90,6 +90,26 @@ export interface StatusIntegracaoRow extends RowDataPacket {
   statusIntegracaoDescricao: string | null;
 }
 
+// raw_faturas (prod_monitors_system3): fatura ja baixada e presente no S3,
+// aguardando ou tendo falhado a extracao — pode existir aqui sem nunca virar
+// uma linha em faturaRelatorioEnergetico (fatura_id fica null nesse caso).
+export interface RawFaturaRow extends RowDataPacket {
+  id: number;
+  raw_coleta_id: number;
+  concessionaria_id: number;
+  unidade_id: number;
+  url: string;
+  data_referencia: string | null;
+  status: "pending" | "extracting" | "processing" | "done" | "error" | "skipped";
+  etapa: string | null;
+  tentativas: number;
+  erro_processamento: string | null;
+  fatura_id: number | null;
+  primeiro_visto_em: string;
+  ultimo_visto_em: string;
+  vezes_visto: number;
+}
+
 // Formas retornadas pelas funcoes de db/unidades.ts (nao mapeiam 1:1 pra uma linha).
 
 export interface UnidadeJobPayload {
@@ -123,6 +143,7 @@ export interface UnidadeDetails {
   unidade: UnidadeRow;
   faturaCredencial: FaturaCredencialRow | null;
   faturaRelatorioEnergetico: FaturaRelatorioEnergeticoRow[];
+  rawFaturas: RawFaturaRow[];
   concessionaria: ConcessionariaRow | null;
   integrador: UsuarioRow | null;
   unidadeTerceira: UnidadeTerceiraRow | null;

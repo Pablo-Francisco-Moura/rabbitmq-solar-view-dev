@@ -15,8 +15,70 @@ import type {
   UnidadeJobPayload,
   UnidadeDetails,
   InstallationCodesUpdate,
+  RawFaturaRow,
 } from "../types/unidades.js";
 import type { PortalRow } from "../types/portais.js";
+
+const RAW_FATURA_COLUMNS = `id, raw_coleta_id, concessionaria_id, unidade_id, url, data_referencia,
+       status, etapa, tentativas, erro_processamento, fatura_id,
+       primeiro_visto_em, ultimo_visto_em, vezes_visto`;
+
+// Faturas ja baixadas pro S3 pelo crawler (raw_faturas) para a unidade — pode
+// ter linhas aqui sem contrapartida em faturaRelatorioEnergetico quando a
+// extracao ainda nao rodou ou falhou (fatura_id null nesse caso).
+export async function getRawFaturasByUnidade(
+  unidadeId: number,
+): Promise<RawFaturaRow[]> {
+  const db = getPool();
+  const [rows] = await db.query<RawFaturaRow[]>(
+    `SELECT ${RAW_FATURA_COLUMNS}
+     FROM raw_faturas
+     WHERE unidade_id = ?
+     ORDER BY data_referencia DESC, id DESC`,
+    [unidadeId],
+  );
+  return rows;
+}
+
+// "Destrava" uma raw_fatura presa em status='error': o job de extracao
+// (ExtractRawFaturasTask, em solarview_api_3.0) so pega linhas com
+// status='pending', entao error e' terminal ate alguem resetar assim — sem
+// isso a fatura fica no S3 pra sempre sem nunca virar uma linha em
+// faturaRelatorioEnergetico. Zera tentativas tambem pra ela ter o orcamento
+// de retry completo de novo, nao cair direto em error de novo na primeira
+// falha subsequente.
+//
+// CRITICO: tambem zera extracao_id. O job so dispara uma extracao nova
+// (resolveExtraction em extract-raw-faturas-task.ts) quando o extracao_id
+// linkado esta ausente ou aponta pra uma extracao cujo status e' 'error' —
+// uma extracao que so falhou na validacao de negocio (_isValid:false, ex.:
+// o bug do faturaModalidadeTarifaria) fica com status 'done' na tabela
+// raw_extracao_fatura, entao sem isso o job so re-le pra sempre o MESMO
+// resultado velho e invalido, nunca chama o idc_api_extract de novo — mesmo
+// depois do fix estar deployado.
+export async function unlockRawFatura(
+  unidadeId: number,
+  rawFaturaId: number,
+): Promise<RawFaturaRow> {
+  const db = getPool();
+  const [result] = await db.query<ResultSetHeader>(
+    `UPDATE raw_faturas
+     SET status = 'pending', proxima_tentativa_em = NULL, erro_processamento = NULL,
+         tentativas = 0, extracao_id = NULL
+     WHERE id = ? AND unidade_id = ? AND status = 'error'`,
+    [rawFaturaId, unidadeId],
+  );
+  if (result.affectedRows === 0)
+    throw new Error(
+      `raw_fatura ${rawFaturaId} nao encontrada (ou nao esta em erro) para a unidade ${unidadeId}.`,
+    );
+
+  const [rows] = await db.query<RawFaturaRow[]>(
+    `SELECT ${RAW_FATURA_COLUMNS} FROM raw_faturas WHERE id = ?`,
+    [rawFaturaId],
+  );
+  return rows[0];
+}
 
 // Espelha o job publicado hoje manualmente nas filas idc_*: dado o unidadeId,
 // busca fatura credencial + unidade e resolve o integradorId via
@@ -115,6 +177,8 @@ export async function getUnidadeDetails(
     [unidadeId],
   );
 
+  const rawFaturas = await getRawFaturasByUnidade(unidadeId);
+
   let concessionaria: ConcessionariaRow | null = null;
   if (unidade.concessionaria_concessionariaId != null) {
     const [concessionariaRows] = await db.query<ConcessionariaRow[]>(
@@ -173,6 +237,7 @@ export async function getUnidadeDetails(
     unidade,
     faturaCredencial: credencialRows[0] || null,
     faturaRelatorioEnergetico: relatorioRows,
+    rawFaturas,
     concessionaria,
     integrador,
     unidadeTerceira,
