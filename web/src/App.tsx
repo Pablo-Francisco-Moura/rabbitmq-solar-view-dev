@@ -3,6 +3,7 @@ import QueuesPage from "./pages/QueuesPage.js";
 import UnitPage from "./pages/UnitPage.js";
 import UnitsPage from "./pages/UnitsPage.js";
 import PortaisPage from "./pages/PortaisPage.js";
+import SuporteL2Page from "./pages/SuporteL2Page.js";
 
 export default function App() {
   return (
@@ -32,6 +33,12 @@ export default function App() {
         >
           Portais
         </NavLink>
+        <NavLink
+          to="/suporteL2"
+          className={({ isActive }) => (isActive ? "active" : "")}
+        >
+          Suporte L2
+        </NavLink>
       </nav>
 
       <Routes>
@@ -40,6 +47,7 @@ export default function App() {
         <Route path="/unit" element={<UnitPage />} />
         <Route path="/units" element={<UnitsPage />} />
         <Route path="/portais" element={<PortaisPage />} />
+        <Route path="/suporteL2" element={<SuporteL2Page />} />
       </Routes>
     </div>
   );

@@ -1,8 +1,15 @@
 import { request } from "./request.js";
-import type { AcessarIntegradorResult } from "../types/suporteL2.js";
+import type {
+  AcessarIntegradorResult,
+  ColaboradorAtualResult,
+} from "../types/suporteL2.js";
 
-export const acessarContaIntegrador = (integradorUsuarioId: number) =>
+export const getColaboradorAtual = () =>
+  request<ColaboradorAtualResult>("/suporte-l2/colaborador-atual");
+
+// integrador aceita tanto usuario.usuarioId (numerico) quanto usuEmail.
+export const acessarContaIntegrador = (integrador: string | number) =>
   request<AcessarIntegradorResult>("/suporte-l2/acessar-conta-integrador", {
     method: "POST",
-    body: JSON.stringify({ integradorUsuarioId }),
+    body: JSON.stringify({ integrador: String(integrador) }),
   });
