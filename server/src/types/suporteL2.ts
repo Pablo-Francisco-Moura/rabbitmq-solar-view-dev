@@ -15,3 +15,16 @@ export interface AcessarIntegradorResult {
     usuEmail: string;
   } | null;
 }
+
+export interface ColaboradorAtualResult {
+  colaborador: {
+    usuarioId: number;
+    usuEmail: string;
+  };
+  integradorAtual: {
+    usuarioId: number;
+    usuNome: string;
+    usuEmail: string;
+    integradorId: number;
+  } | null;
+}
