@@ -8,6 +8,7 @@ import {
   orderRelatorioColumns,
   relatorioColumnLabel,
 } from "../../utils/unit/relatorioHelpers.js";
+import CopyableText from "../CopyableText.js";
 import "../../css/units-details.css";
 import "../../css/units-relatorio.css";
 import "../../css/table.css";
@@ -109,7 +110,13 @@ export default function FaturaRelatorioTable({ relatorio, onOpenPdf, onDelete }:
                   {relatorioColumns.map((column) => {
                     if (column === "faturaUrlArquivoRaw") {
                       return (
-                        <td key={column}>{String(row.faturaUrlArquivo ?? "")}</td>
+                        <td key={column}>
+                          {row.faturaUrlArquivo ? (
+                            <CopyableText value={String(row.faturaUrlArquivo)} />
+                          ) : (
+                            ""
+                          )}
+                        </td>
                       );
                     }
                     const value = row[column];
